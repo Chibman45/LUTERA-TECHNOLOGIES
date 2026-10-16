@@ -4,7 +4,8 @@ export function mountScene(host) {
  const canvas=document.createElement('canvas');
  canvas.setAttribute('aria-hidden','true');
  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'low-power'});
- renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+ let pixelRatio=Math.min(devicePixelRatio,1.5);
+ renderer.setPixelRatio(pixelRatio);
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.setClearColor(0x000000,0);
  const scene=new THREE.Scene();
@@ -78,15 +79,26 @@ export function mountScene(host) {
   }
  }
  let width=0,height=0,frame=0,last=0,elapsed=0,inView=true,paused=false,disposed=false,tx=0,ty=0;
+ let frameInterval=32,costSum=0,costSamples=0,warmed=false;
  const media=matchMedia('(prefers-reduced-motion: reduce)');
- function resize(){width=host.clientWidth;height=host.clientHeight;if(!width||!height)return;renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();draw()}
+ function resize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h||(w===width&&h===height))return;width=w;height=h;renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();draw()}
  const anchors=[['laptop',laptop,.8],['server',server,1],['network',network,.35]].map(([id,group,y])=>({element:host.closest('.visual').querySelector(`[data-hotspot="${id}"]`),group,y}));
  const projection=new THREE.Vector3();
- function draw(){renderer.render(scene,camera);for(const anchor of anchors){if(!anchor.element)continue;projection.set(0,anchor.y,0);anchor.group.localToWorld(projection);projection.project(camera);anchor.element.style.left=((projection.x+1)/2*width)+'px';anchor.element.style.top=((-projection.y+1)/2*height)+'px'}}
+ function draw(){const start=performance.now();renderer.render(scene,camera);for(const anchor of anchors){if(!anchor.element)continue;projection.set(0,anchor.y,0);anchor.group.localToWorld(projection);projection.project(camera);anchor.element.style.left=((projection.x+1)/2*width)+'px';anchor.element.style.top=((-projection.y+1)/2*height)+'px'}
+  // Real render cost, not browser identity, controls the budget on weak GPUs.
+  // Keep the same live scene while leaving time for navigation and form input.
+  if(!warmed){warmed=true;return}
+  costSum+=performance.now()-start;
+  if(++costSamples>=3){
+   const average=costSum/costSamples;costSum=0;costSamples=0;
+   frameInterval=Math.min(100,Math.max(32,average*1.6));
+   if(average>30&&pixelRatio>.76){pixelRatio=Math.max(.75,pixelRatio*.8);renderer.setPixelRatio(pixelRatio)}
+  }
+ }
  function animate(now){frame=0;if(disposed||paused||!inView||document.hidden||media.matches)return;
-  if(now-last>=32){elapsed+=Math.min((now-last)/1000,.06);last=now;
-   assembly.rotation.y=THREE.MathUtils.lerp(assembly.rotation.y,tx*.26+Math.sin(elapsed*.25)*.07,.05);
-   assembly.rotation.x=THREE.MathUtils.lerp(assembly.rotation.x,ty*.075,.05);
+  if(now-last>=frameInterval){const delta=Math.min((now-last)/1000,.12),smoothing=1-Math.exp(-delta*1.5);elapsed+=delta;last=now;
+   assembly.rotation.y=THREE.MathUtils.lerp(assembly.rotation.y,tx*.26+Math.sin(elapsed*.25)*.07,smoothing);
+   assembly.rotation.x=THREE.MathUtils.lerp(assembly.rotation.x,ty*.075,smoothing);
    laptop.position.y=.15+Math.sin(elapsed*.9)*.055;
    server.position.y=1.08+Math.sin(elapsed*.7+1)*.035;
    particles.rotation.y=elapsed*.035;
@@ -109,6 +121,6 @@ export function mountScene(host) {
  function lost(e){e.preventDefault();dispose();host.dispatchEvent(new Event('scene-unavailable'))}
  canvas.addEventListener('webglcontextlost',lost);
  function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(frame);observer.disconnect();resizer.disconnect();host.removeEventListener('pointercancel',reset);host.removeEventListener('pointerdown',startTouch);host.removeEventListener('pointerup',pick);host.removeEventListener('pointermove',pointer);host.removeEventListener('pointerleave',reset);document.removeEventListener('visibilitychange',sync);media.removeEventListener('change',sync);canvas.removeEventListener('webglcontextlost',lost);const geometries=new Set(),materials=new Set();scene.traverse(o=>{if(o.isInstancedMesh)o.dispose();if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material)});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();canvas.remove();anchors.forEach(({element})=>{element?.style.removeProperty('left');element?.style.removeProperty('top')})}
- resize();draw();host.append(canvas);sync();
+ resize();host.append(canvas);sync();
  return {setPaused(value){paused=value;sync()},dispose};
 }

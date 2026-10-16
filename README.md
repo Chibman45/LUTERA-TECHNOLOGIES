@@ -71,3 +71,5 @@ Lighthouse 13.5.0 was used to audit the published homepage on mobile/desktop, So
 python scripts/check_seo.py
 python scripts/submit_indexnow.py # validates only; sends nothing
 ```
+
+The 3D renderer uses a cost-based frame/resolution budget on slow GPUs and avoids duplicate resize renders. Phones and touch-only layouts display text and cards directly instead of initializing scroll reveals. This preserves the existing 3D eligibility and restored page design.
