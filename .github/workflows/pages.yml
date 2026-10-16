@@ -32,6 +32,8 @@ jobs:
           python scripts/build.py
           python scripts/check.py
           node --check assets/app.js
+          node --check assets/motion.js
+          node --check assets/scene.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:

@@ -10,7 +10,7 @@ class Check(HTMLParser):
   if 'id' in a:self.ids.append(a['id'])
   if tag=='h1':self.h1+=1
   if tag=='img' and 'alt' not in a:errors.append(f'{self.file}: image missing alt')
-  for key in ('href','src'):
+  for key in ('href','src','srcset'):
    u=a.get(key,'')
    if not u or u.startswith(('#','https:','http:','mailto:','tel:')):continue
    path=unquote(urlsplit(u).path)

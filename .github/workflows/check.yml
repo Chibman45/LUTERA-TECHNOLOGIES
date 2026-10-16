@@ -19,3 +19,5 @@ jobs:
       - run: python scripts/build.py
       - run: python scripts/check.py
       - run: node --check assets/app.js
+      - run: node --check assets/motion.js
+      - run: node --check assets/scene.js

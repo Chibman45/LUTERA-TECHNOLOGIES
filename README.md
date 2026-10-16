@@ -26,7 +26,11 @@ node --check assets/app.js
 
 Serve the repository under `/LUTERA-TECHNOLOGIES/` to match generated links. `SITE_BASE` and `SITE_ORIGIN` environment variables override the default GitHub Pages path and origin when rebuilding for another location.
 
-Editable SVG brand variants and the lightweight hardware illustration live in `assets/`. Colors are editable tokens in `assets/style.css`. Motion respects reduced-motion preferences. No WebGL, advertising analytics or tracking scripts are loaded on the site. FormSubmit may show its own spam-prevention page.
+The logo recreates the supplied name card’s silver/blue L, orbital swoosh, cyan pixels and LUTERA wordmark. `assets/lutera-logo.png` is the full-resolution artwork; `lutera-logo.webp` is the 42 KB web asset. The SVG favicon follows the same emblem. Colors remain editable in `assets/style.css`.
+
+Fonts are self-hosted as WOFF2 (with OFL licenses), avoiding external font requests.
+
+The desktop hero uses self-hosted Three.js 0.180.0 to model a laptop, server and network switch. It responds to pointer movement, animates connection packets and supports pause/resume. After initial page load, hardware-accelerated desktops can start automatically; unknown/software graphics use an explicit “Explore in 3D” control. GPU capability discovery is asynchronous to protect first paint. The loop caps rendering to approximately 30 fps, limits pixel ratio, and suspends offscreen or in background tabs. Mobile, reduced-motion, data-saver and unavailable-WebGL paths retain the static illustration; mobile and reduced-motion visitors do not download the 3D library. Section reveals, card tilt, hero entrance, gradient motion and a procurement scan complete the motion treatment. No advertising analytics or tracking scripts are loaded. FormSubmit may show its own spam-prevention page.
 
 ## Validation
 
