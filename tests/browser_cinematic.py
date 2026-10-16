@@ -76,6 +76,11 @@ with sync_playwright() as p:
  assert r.locator('.cinema-sticky').evaluate("e=>getComputedStyle(e).position")=='sticky'
  assert r.evaluate('document.documentElement.scrollWidth<=innerWidth')
  touch.close()
+ phone=b.new_context(viewport={'width':1100,'height':600},is_mobile=True,has_touch=True,user_agent='Mozilla/5.0 (Linux; Android 15; Phone) AppleWebKit/537.36 Chrome/140.0 Mobile Safari/537.36')
+ r=phone.new_page();r.goto(base,wait_until='networkidle')
+ assert not r.locator('[data-cinema-story]').evaluate("e=>e.classList.contains('cinema-motion')")
+ assert r.locator('.cinema-sticky').evaluate("e=>getComputedStyle(e).position")=='relative'
+ phone.close()
  nojs=b.new_context(java_script_enabled=False,viewport={'width':390,'height':900});r=nojs.new_page();r.goto(base)
  assert r.locator('.cinema-chapter').count()==4
  assert r.locator('[data-cinema-pause]').is_hidden()
