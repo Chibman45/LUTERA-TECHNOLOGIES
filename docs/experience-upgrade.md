@@ -9,7 +9,7 @@
 7. **Equipment comparison:** laptop, desktop/all-in-one and workstation comparison with two or three selectable columns and add-to-enquiry actions. The guidance does not claim model availability or fixed pricing.
 8. **Procurement timeline:** four keyboard-accessible stages with context and preparation checklists, on the homepage and procurement page.
 9. **Equipment photography:** locally served Unsplash equipment/workplace imagery, consistent styling, representative-image notices and source/license records in photo-credits.md.
-10. **Mobile actions:** safe-area-aware quote and WhatsApp controls, hidden on active quote/contact pages so forms remain unobstructed. Tablets keep the standard illustration; desktop retains automatic 3D.
+10. **Mobile actions:** safe-area-aware quote and WhatsApp controls, hidden on active quote/contact pages so forms remain unobstructed. Desktop and eligible large/keyboard/trackpad tablets use automatic 3D; phones and small touch-only tablets retain the illustration.
 
 ## Delivery and privacy
 
@@ -20,3 +20,5 @@ RFQs and contact messages remain native HTTPS POSTs to FormSubmit for delivery t
 `tests/browser_experience.py` hosts the built static site itself unless LUTERA_TEST_URL is supplied. It checks equipment selection, tab keyboard behavior, timeline stages, list persistence and quantity edits, comparison controls, guided validation/back navigation, structured form payloads, contact transport, responsive layouts at 360/768/1024/1440 pixels, native no-JavaScript RFQ rendering and storage-blocked fallback. External form requests are intercepted; these tests send no email. It is run in GitHub Actions using pinned Playwright dependencies.
 
 A separate WebGL browser check verified automatic scene rendering, projected hotspot positions, keyboard activation of all three devices and a server-to-quote handoff. Image checks decoded the lazy-loaded local photographs after scrolling. Static checks cover links, assets, headings, IDs, alternative text and script syntax.
+
+`tests/browser_tablet_3d.py` additionally checks real WebGL on large touch tablets, 1024px tablets and smaller trackpad/keyboard tablets, along with phone/small-tablet/reduced-motion fallbacks and swipe protection.

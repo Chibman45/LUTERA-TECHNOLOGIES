@@ -37,3 +37,5 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Verify procurement and responsive flows
         run: python tests/browser_experience.py
+      - name: Verify tablet 3D and touch interaction
+        run: python tests/browser_tablet_3d.py

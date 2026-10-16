@@ -2,10 +2,13 @@
 (() => {
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
  const fine=matchMedia('(hover: hover) and (pointer: fine)');
- const desktop=matchMedia('(min-width: 1025px)');
- const mobileOrTablet=!!navigator.userAgentData?.mobile||/Android|iPad|iPhone|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ const largeScreen=matchMedia('(min-width: 1024px)');
+ const tabletScreen=matchMedia('(min-width: 768px)');
+ const pointingDevice=matchMedia('(any-pointer: fine)');
+ const phone=/iPhone|iPod|Android.*Mobile|Windows Phone/i.test(navigator.userAgent);
+ let keyboardNavigation=false;
  const script=document.currentScript;
- const sceneURL=new URL('scene.js?v=experience1',script.src).href;
+ const sceneURL=new URL('scene.js?v=tablet3d',script.src).href;
  const header=document.querySelector('header');
  const markScroll=()=>header.classList.toggle('is-scrolled',scrollY>20);
  addEventListener('scroll',markScroll,{passive:true});markScroll();
@@ -28,23 +31,26 @@
  const button=document.querySelector('[data-motion-toggle]');
  const visual=host.closest('.visual');
  let controller=null,loading=false,failed=false,intersecting=false,userPaused=false,ready=false;
- function eligibleDesktop(){return desktop.matches&&fine.matches&&!mobileOrTablet&&!reduced.matches&&!navigator.connection?.saveData}
+ function eligibleScene(){return !phone&&(largeScreen.matches||(tabletScreen.matches&&(pointingDevice.matches||keyboardNavigation)))&&!reduced.matches&&!navigator.connection?.saveData}
  function fallback(){controller?.dispose();controller=null;visual.classList.remove('scene-loaded');button.hidden=true}
  async function updateScene(){
-  const eligible=eligibleDesktop();
+  const eligible=eligibleScene();
   if(!eligible){fallback();return}
   if(controller||loading||failed||!intersecting||!ready)return;
   loading=true;
   try{
    button.disabled=true;
    const {mountScene}=await import(sceneURL);
-   if(!eligibleDesktop())return;
+   if(!eligibleScene())return;
    controller=mountScene(host);controller.setPaused(userPaused);
    visual.classList.add('scene-loaded');button.hidden=false;button.textContent=userPaused?'Resume animation':'Pause animation';
   }catch{failed=true;fallback()}finally{loading=false;button.disabled=false}
  }
  new IntersectionObserver(entries=>{intersecting=entries[0].isIntersecting;if(intersecting)updateScene()},{rootMargin:'120px'}).observe(host);
- for(const media of [reduced,desktop,fine])media.addEventListener('change',updateScene);
+ for(const media of [reduced,largeScreen,tabletScreen,pointingDevice])media.addEventListener('change',updateScene);
+ // Browsers do not expose keyboard attachment. Trusted Tab navigation is an
+ // accessible signal for keyboard-only tablets without a mouse or trackpad.
+ addEventListener('keydown',e=>{if(e.isTrusted&&e.key==='Tab'&&!keyboardNavigation){keyboardNavigation=true;updateScene()}});
  host.addEventListener('scene-unavailable',()=>{failed=true;fallback()});
  button.addEventListener('click',()=>{if(!controller)return;userPaused=!userPaused;controller?.setPaused(userPaused);visual.closest('.hero').classList.toggle('motion-paused',userPaused);button.setAttribute('aria-pressed',String(userPaused));button.textContent=userPaused?'Resume animation':'Pause animation'});
  addEventListener('pagehide',fallback);

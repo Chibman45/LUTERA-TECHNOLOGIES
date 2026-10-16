@@ -30,7 +30,7 @@ The logo recreates the supplied name card’s silver/blue L, orbital swoosh, cya
 
 Fonts are self-hosted as WOFF2 (with OFL licenses), avoiding external font requests.
 
-The desktop hero uses self-hosted Three.js 0.180.0 to model a laptop, server and network switch. It responds to pointer movement, animates connection packets and supports pause/resume. After the initial page renders, 3D starts automatically on desktop layouts wider than 1024 CSS pixels with a mouse or trackpad. There is no activation button or GPU/startup-time opt-in gate. Mobile and tablet devices retain the standard illustration, including identified tablets with connected pointing devices. The loop caps rendering to approximately 30 fps, limits pixel ratio, and suspends offscreen or in background tabs. Mobile, reduced-motion, data-saver and unavailable-WebGL paths retain the static illustration; mobile and reduced-motion visitors do not download the 3D library. Section reveals, card tilt, hero entrance, gradient motion and a procurement scan complete the motion treatment. No advertising analytics or tracking scripts are loaded. FormSubmit may show its own spam-prevention page.
+The desktop hero uses self-hosted Three.js 0.180.0 to model a laptop, server and network switch. It responds to pointer movement, animates connection packets and supports pause/resume. After the initial page renders, 3D starts automatically on desktop and large-tablet layouts at least 1024 CSS pixels wide, including touch-only tablets. Tablets at least 768 pixels wide also qualify when a mouse/trackpad is available or trusted Tab-key navigation signals keyboard use. Browsers cannot directly report a keyboard being attached. Phones and smaller tablet layouts retain the standard illustration. There is no activation button or GPU/startup-time opt-in gate. The loop caps rendering to approximately 30 fps, limits pixel ratio, and suspends offscreen or in background tabs. Phone, reduced-motion, data-saver and unavailable-WebGL paths retain the static illustration; phone and reduced-motion visitors do not download the 3D library. Section reveals, card tilt, hero entrance, gradient motion and a procurement scan complete the motion treatment. No advertising analytics or tracking scripts are loaded. FormSubmit may show its own spam-prevention page.
 
 ## Validation
 
@@ -50,6 +50,7 @@ Run the isolated browser checks with:
 python -m pip install -r tests/requirements.txt
 python -m playwright install chromium
 python tests/browser_experience.py
+python tests/browser_tablet_3d.py
 ```
 
-The test starts its own static server and intercepts external form submissions, so it sends no email. Set `LUTERA_TEST_URL` to check another deployment. Set `LUTERA_SCREENSHOTS` to an existing output directory to retain screenshots. Desktop 3D, mobile/tablet fallbacks and reduced-motion preferences remain supported.
+The test starts its own static server and intercepts external form submissions, so it sends no email. Set `LUTERA_TEST_URL` to check another deployment. Set `LUTERA_SCREENSHOTS` to an existing output directory to retain screenshots. Desktop/eligible-tablet 3D, phone/small-tablet fallbacks and reduced-motion preferences remain supported. Touch swipes scroll the page without picking equipment; taps and keyboard controls remain available.

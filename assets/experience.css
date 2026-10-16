@@ -8,3 +8,4 @@
 @media(max-width:1024px){.hotspot-detail,input,textarea,select{scroll-margin-bottom:110px}.mobile-quick-actions [data-enquiry-count]:not(.has-items){display:none}}
 /* Keep the active form clear of redundant fixed contact actions. */
 @media(max-width:1024px){body[data-page="request-quote"] .mobile-quick-actions,body[data-page="contact"] .mobile-quick-actions{display:none}body[data-page="request-quote"],body[data-page="contact"]{padding-bottom:0}}
+@media(pointer:coarse){.scene-hotspot{width:42px;height:42px}.motion-toggle{min-height:44px;padding:11px 16px;font-size:11px}}

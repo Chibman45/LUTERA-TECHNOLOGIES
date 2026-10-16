@@ -82,17 +82,19 @@ export function mountScene(host) {
   frame=requestAnimationFrame(animate);
  }
  function sync(){if(frame){cancelAnimationFrame(frame);frame=0}if(!disposed&&!paused&&inView&&!document.hidden&&!media.matches){last=performance.now();frame=requestAnimationFrame(animate)}}
- function pointer(e){const r=host.getBoundingClientRect();tx=(e.clientX-r.left)/r.width-.5;ty=(e.clientY-r.top)/r.height-.5}
- function reset(){tx=0;ty=0}
+ let touchStart=null;
+ function startTouch(e){if(e.pointerType==='touch')touchStart={x:e.clientX,y:e.clientY}}
+ function pointer(e){if(e.pointerType==='touch')return;const r=host.getBoundingClientRect();tx=(e.clientX-r.left)/r.width-.5;ty=(e.clientY-r.top)/r.height-.5}
+ function reset(){tx=0;ty=0;touchStart=null}
  const raycaster=new THREE.Raycaster(),cursor=new THREE.Vector2();
- function pick(e){const rect=host.getBoundingClientRect();cursor.set((e.clientX-rect.left)/rect.width*2-1,-((e.clientY-rect.top)/rect.height)*2+1);raycaster.setFromCamera(cursor,camera);const hit=raycaster.intersectObjects([laptop,server,network],true)[0];if(!hit)return;let target=hit.object;while(target&&!target.userData.equipmentId)target=target.parent;if(target)host.dispatchEvent(new CustomEvent('equipment-select',{bubbles:true,detail:{id:target.userData.equipmentId}}))}
+ function pick(e){if(e.pointerType==='touch'){const start=touchStart;touchStart=null;if(!start||Math.hypot(e.clientX-start.x,e.clientY-start.y)>12)return}const rect=host.getBoundingClientRect();cursor.set((e.clientX-rect.left)/rect.width*2-1,-((e.clientY-rect.top)/rect.height)*2+1);raycaster.setFromCamera(cursor,camera);const hit=raycaster.intersectObjects([laptop,server,network],true)[0];if(!hit)return;let target=hit.object;while(target&&!target.userData.equipmentId)target=target.parent;if(target)host.dispatchEvent(new CustomEvent('equipment-select',{bubbles:true,detail:{id:target.userData.equipmentId}}))}
  const observer=new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;sync()},{threshold:.05});observer.observe(host);
  const resizer=new ResizeObserver(resize);resizer.observe(host);
- host.addEventListener('pointerup',pick);host.addEventListener('pointermove',pointer,{passive:true});host.addEventListener('pointerleave',reset);
+ host.addEventListener('pointercancel',reset);host.addEventListener('pointerdown',startTouch,{passive:true});host.addEventListener('pointerup',pick);host.addEventListener('pointermove',pointer,{passive:true});host.addEventListener('pointerleave',reset);
  document.addEventListener('visibilitychange',sync);media.addEventListener('change',sync);
  function lost(e){e.preventDefault();dispose();host.dispatchEvent(new Event('scene-unavailable'))}
  canvas.addEventListener('webglcontextlost',lost);
- function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(frame);observer.disconnect();resizer.disconnect();host.removeEventListener('pointerup',pick);host.removeEventListener('pointermove',pointer);host.removeEventListener('pointerleave',reset);document.removeEventListener('visibilitychange',sync);media.removeEventListener('change',sync);canvas.removeEventListener('webglcontextlost',lost);const geometries=new Set(),materials=new Set();scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material)});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();canvas.remove();anchors.forEach(({element})=>{element?.style.removeProperty('left');element?.style.removeProperty('top')})}
+ function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(frame);observer.disconnect();resizer.disconnect();host.removeEventListener('pointercancel',reset);host.removeEventListener('pointerdown',startTouch);host.removeEventListener('pointerup',pick);host.removeEventListener('pointermove',pointer);host.removeEventListener('pointerleave',reset);document.removeEventListener('visibilitychange',sync);media.removeEventListener('change',sync);canvas.removeEventListener('webglcontextlost',lost);const geometries=new Set(),materials=new Set();scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material)});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();canvas.remove();anchors.forEach(({element})=>{element?.style.removeProperty('left');element?.style.removeProperty('top')})}
  resize();draw();host.append(canvas);sync();
  return {setPaused(value){paused=value;sync()},dispose};
 }
