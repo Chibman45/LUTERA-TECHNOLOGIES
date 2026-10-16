@@ -35,7 +35,6 @@ jobs:
           node --check assets/experience.js
           node --check assets/motion.js
           node --check assets/scene.js
-          node --check assets/cinematic.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:

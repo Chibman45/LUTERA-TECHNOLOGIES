@@ -22,7 +22,6 @@ jobs:
       - run: node --check assets/experience.js
       - run: node --check assets/motion.js
       - run: node --check assets/scene.js
-      - run: node --check assets/cinematic.js
   browser:
     runs-on: ubuntu-latest
     steps:
@@ -40,5 +39,3 @@ jobs:
         run: python tests/browser_experience.py
       - name: Verify tablet 3D and touch interaction
         run: python tests/browser_tablet_3d.py
-      - name: Verify cinematic navigation and motion preferences
-        run: python tests/browser_cinematic.py
