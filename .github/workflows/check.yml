@@ -18,6 +18,8 @@ jobs:
           node-version: '24'
       - run: python scripts/build.py
       - run: python scripts/check.py
+      - run: python scripts/check_seo.py
+      - run: python scripts/submit_indexnow.py
       - run: node --check assets/app.js
       - run: node --check assets/experience.js
       - run: node --check assets/motion.js
@@ -30,6 +32,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Build public pages
+        env:
+          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+          BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
         run: python scripts/build.py
       - name: Install browser test dependencies
         run: |

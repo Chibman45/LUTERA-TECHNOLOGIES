@@ -58,3 +58,16 @@ The test starts its own static server and intercepts external form submissions, 
 Company facts are maintained in `scripts/company.py`, including the owner-supplied Abuja address, administrative location and nature of business. The About and Contact pages, footer and Organization structured data share these details. Digital-service quote links preselect AI, software, data or cloud enquiries without requiring equipment quantities.
 
 The Solutions page covers digital solutions, consulting, procurement/supply and installation/maintenance/support alongside the equipment catalogue and comparison. Subject-specific local imagery supports every solution; AI/software/data/cloud cards share their content and images with the homepage and Services page.
+
+## Search visibility and audit
+
+Every public page has unique titles and descriptions, canonical links, PNG social-preview metadata and JSON-LD for the organization, website, breadcrumbs and relevant services. The four digital service landing pages are linked from the shared solution cards. The sitemap includes 17 indexable URLs; confirmation and error pages use noindex. `scripts/check_seo.py` validates this public surface in CI.
+
+Google and Bing ownership verification are not completed until the owner signs in and verifies the supplied tag. See `docs/search-engine-setup.md` for the exact URL-prefix property, sitemap and supported GitHub Actions variables. A successful Pages deployment also notifies IndexNow engines with the public sitemap URLs; a successful notification is not proof of indexing. The key in `indexnow.txt` is the protocol's public validation token, not an account credential.
+
+Lighthouse 13.5.0 was used to audit the published homepage on mobile/desktop, Solutions on mobile and Contact on mobile. Measurements are lab runs, not field Core Web Vitals or ranking guarantees. A before/after visual diagnostic measured 155 versus 25 WebGL draw calls with the same 4,792 triangles, preserving the existing automatic 3D scene and picking behavior. Saved Lighthouse HTML/JSON reports are supplied separately with the audit results. Hosting controls the GitHub Pages 10-minute cache policy; the project does not pretend to configure hostname-root robots.txt from a nested path.
+
+```sh
+python scripts/check_seo.py
+python scripts/submit_indexnow.py # validates only; sends nothing
+```

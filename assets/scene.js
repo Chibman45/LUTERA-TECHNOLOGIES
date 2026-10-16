@@ -19,7 +19,8 @@ export function mountScene(host) {
  const navy=mat(0x142740,.65),metal=mat(0x99b1cb,.8,.23),dark=mat(0x071426,.5),blue=mat(0x126bff,.65);
  const glow=new THREE.MeshBasicMaterial({color:0x00d4ff});
  const screenMat=new THREE.MeshBasicMaterial({color:0x126bff});
- function box(parent,w,h,d,material,x=0,y=0,z=0){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
+ const unitBox=new THREE.BoxGeometry(1,1,1);
+ function box(parent,w,h,d,material,x=0,y=0,z=0){const mesh=new THREE.Mesh(unitBox,material);mesh.scale.set(w,h,d);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
  function line(points,color=0x00b5f7,opacity=.5){const geometry=new THREE.BufferGeometry().setFromPoints(points.map(v=>new THREE.Vector3(...v)));const material=new THREE.LineBasicMaterial({color,transparent:true,opacity});const mesh=new THREE.Line(geometry,material);assembly.add(mesh);return mesh;}
  // Laptop: individually modeled chassis, keyboard, hinge and illuminated screen.
  const laptop=new THREE.Group();laptop.userData.equipmentId='laptop';laptop.position.set(-1.1,.15,1);laptop.rotation.y=.15;assembly.add(laptop);
@@ -62,7 +63,20 @@ export function mountScene(host) {
  const packets=[];
  for(let i=0;i<4;i++){const mesh=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),glow);assembly.add(mesh);packets.push(mesh)}
  const particles=new THREE.Group();assembly.add(particles);
- for(let i=0;i<18;i++){const mesh=new THREE.Mesh(new THREE.BoxGeometry(.035,.035,.035),i%3?blue:glow);const angle=i*2.4;mesh.position.set(Math.cos(angle)*(2.4+i*.04),.3+(i%5)*.52,Math.sin(angle)*2.6);particles.add(mesh)}
+ for(let i=0;i<18;i++){const mesh=new THREE.Mesh(unitBox,i%3?blue:glow);mesh.scale.setScalar(.035);const angle=i*2.4;mesh.position.set(Math.cos(angle)*(2.4+i*.04),.3+(i%5)*.52,Math.sin(angle)*2.6);particles.add(mesh)}
+ // Group repeated static parts by parent and material. The keyboard, drive
+ // details and particles retain their exact geometry while sharing draw calls.
+ const parents=[];assembly.traverse(node=>{if(node.children.some(child=>child.isMesh&&child.geometry===unitBox))parents.push(node)});
+ for(const parent of parents){
+  const batches=new Map();
+  for(const mesh of [...parent.children]){if(!mesh.isMesh||mesh.geometry!==unitBox)continue;const group=batches.get(mesh.material)||[];group.push(mesh);batches.set(mesh.material,group)}
+  for(const [material,meshes] of batches){
+   if(meshes.length<2)continue;
+   const batch=new THREE.InstancedMesh(unitBox,material,meshes.length);
+   meshes.forEach((mesh,i)=>{mesh.updateMatrix();batch.setMatrixAt(i,mesh.matrix);parent.remove(mesh)});
+   batch.instanceMatrix.needsUpdate=true;batch.computeBoundingSphere();parent.add(batch);
+  }
+ }
  let width=0,height=0,frame=0,last=0,elapsed=0,inView=true,paused=false,disposed=false,tx=0,ty=0;
  const media=matchMedia('(prefers-reduced-motion: reduce)');
  function resize(){width=host.clientWidth;height=host.clientHeight;if(!width||!height)return;renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();draw()}
@@ -94,7 +108,7 @@ export function mountScene(host) {
  document.addEventListener('visibilitychange',sync);media.addEventListener('change',sync);
  function lost(e){e.preventDefault();dispose();host.dispatchEvent(new Event('scene-unavailable'))}
  canvas.addEventListener('webglcontextlost',lost);
- function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(frame);observer.disconnect();resizer.disconnect();host.removeEventListener('pointercancel',reset);host.removeEventListener('pointerdown',startTouch);host.removeEventListener('pointerup',pick);host.removeEventListener('pointermove',pointer);host.removeEventListener('pointerleave',reset);document.removeEventListener('visibilitychange',sync);media.removeEventListener('change',sync);canvas.removeEventListener('webglcontextlost',lost);const geometries=new Set(),materials=new Set();scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material)});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();canvas.remove();anchors.forEach(({element})=>{element?.style.removeProperty('left');element?.style.removeProperty('top')})}
+ function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(frame);observer.disconnect();resizer.disconnect();host.removeEventListener('pointercancel',reset);host.removeEventListener('pointerdown',startTouch);host.removeEventListener('pointerup',pick);host.removeEventListener('pointermove',pointer);host.removeEventListener('pointerleave',reset);document.removeEventListener('visibilitychange',sync);media.removeEventListener('change',sync);canvas.removeEventListener('webglcontextlost',lost);const geometries=new Set(),materials=new Set();scene.traverse(o=>{if(o.isInstancedMesh)o.dispose();if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material)});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();canvas.remove();anchors.forEach(({element})=>{element?.style.removeProperty('left');element?.style.removeProperty('top')})}
  resize();draw();host.append(canvas);sync();
  return {setPaused(value){paused=value;sync()},dispose};
 }

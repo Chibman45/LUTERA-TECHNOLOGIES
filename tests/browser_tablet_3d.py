@@ -45,6 +45,14 @@ with sync_playwright() as p:
    host.dispatch_event('pointerup',{'pointerType':'touch','clientX':180,'clientY':380})
    assert page.evaluate('window.equipmentPicks')==0
    assert host.evaluate('(e)=>getComputedStyle(e).touchAction')=='pan-y'
+   # The visible server remains pickable in the actual batched WebGL geometry.
+   if name=='large_touch_tablet':
+    rect=page.locator('[data-hotspot="server"]').bounding_box()
+    pick={'pointerType':'mouse','clientX':rect['x']+rect['width']/2,'clientY':rect['y']+rect['height']/2}
+    host.dispatch_event('pointerdown',pick);host.dispatch_event('pointerup',pick)
+    assert page.locator('[data-hotspot-title]').inner_text()=='Servers & storage'
+    assert page.evaluate('window.equipmentPicks')==1
+    page.keyboard.press('Escape')
    # Device details remain usable with touch and keyboard.
    hotspot=page.locator('[data-hotspot="server"]');hotspot.focus();hotspot.press('Enter')
    assert page.locator('[data-hotspot-title]').inner_text()=='Servers & storage'

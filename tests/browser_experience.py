@@ -99,7 +99,7 @@ with sync_playwright() as p:
  # All public routes and layouts, including comparison horizontal-scroll containment.
  for width in [360,768,1024,1440]:
   q.set_viewport_size({'width':width,'height':900})
-  for route in ['', 'solutions/','request-quote/','contact/','services/it-procurement/']:
+  for route in ['', 'solutions/','request-quote/','contact/','services/it-procurement/','services/ai-automation/','services/software-development/','services/data-analytics/','services/cloud-integration/']:
    q.goto(base+route,wait_until='domcontentloaded')
    assert q.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,route)
    toggle=q.locator('.floating-contact-toggle');options=q.locator('.floating-contact-options')

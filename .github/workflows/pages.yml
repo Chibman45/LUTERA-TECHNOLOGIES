@@ -28,9 +28,13 @@ jobs:
         with:
           node-version: '24'
       - name: Build and validate
+        env:
+          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+          BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
         run: |
           python scripts/build.py
           python scripts/check.py
+          python scripts/check_seo.py
           node --check assets/app.js
           node --check assets/experience.js
           node --check assets/motion.js
@@ -42,7 +46,7 @@ jobs:
       - name: Package public site only
         run: |
           mkdir _site
-          cp index.html 404.html robots.txt sitemap.xml _site/
+          cp index.html 404.html robots.txt sitemap.xml indexnow.txt _site/
           cp -R assets about contact cookies privacy request-quote services solutions terms thank-you _site/
           touch _site/.nojekyll
       - name: Upload Pages artifact
@@ -52,3 +56,7 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Notify IndexNow search engines
+        continue-on-error: true
+        run: python scripts/submit_indexnow.py --submit

@@ -67,3 +67,15 @@ footer .company-address{margin:16px 0;font-size:12px;color:#9badc3}
 .solution-photo-note{margin:0;padding-bottom:24px}
 @media(max-width:1024px){.service-solutions-grid{gap:18px}.service-solutions-grid .equipment-card>div{padding:24px}}
 @media(max-width:760px){.service-solutions-grid{grid-template-columns:1fr;gap:22px}.digital-card-copy{padding:25px}.solutions-jump nav{gap:9px;padding:18px 0}.solutions-jump a{padding:11px 13px;font-size:11px}}
+
+/* Audit fixes preserve the existing layout and brand colors. */
+.photo-note{color:#52677d}
+.timeline-tabs button[aria-selected=true],.timeline-tabs button[aria-selected=true]>span,.prepare-card .text-link{color:#0755d6}
+.digital-card-copy .service-detail-link{margin-top:14px;font-size:11px}
+.service-figure{margin:0;min-width:0}.service-figure img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;border-radius:18px}.service-figure figcaption{color:#52677d;font-size:11px;margin-top:12px}
+.related-services{display:flex;flex-wrap:wrap;gap:20px 30px}
+
+.page-hero .eyebrow,.pale .eyebrow,.pale .text-link{color:#0755d6}
+.equipment-tabs small,.compare-picker legend{color:#52677d}
+
+.pale .form-footnote{color:#52677d}

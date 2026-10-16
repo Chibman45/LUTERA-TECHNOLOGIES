@@ -35,6 +35,8 @@ def company_details():
         '</dl>' + directions_link() + '</div><div class="company-scope"><h3>Nature of business</h3><p>' +
         escape(NATURE_OF_BUSINESS) + '</p></div></div></section>')
 
+DIGITAL_SERVICE_SLUGS={'ai':'ai-automation','software':'software-development','data':'data-analytics','cloud':'cloud-integration'}
+
 DIGITAL_SERVICE_IMAGES = {
     'ai': ('ai', 'Abstract AI lettering with connected digital paths'),
     'software': ('software', 'Software source code displayed on a development laptop'),
@@ -50,5 +52,5 @@ def digital_services(base):
         DIGITAL_SERVICE_IMAGES[key][0] + '.jpg" width="960" height="640" loading="lazy" decoding="async" alt="' +
         escape(DIGITAL_SERVICE_IMAGES[key][1], quote=True) + '"><div class="digital-card-copy"><span class="mini-label">' + f'{i+1:02} / DIGITAL SOLUTIONS' +
         '</span><h3>' + escape(title) + '</h3><p>' + escape(description) + '</p><a class="text-link" href="' + base +
-        'request-quote/?category=' + key + '">Discuss your project ↗</a></div></article>' for i,(key,title,description) in enumerate(DIGITAL_SERVICES)) +
+        'request-quote/?category=' + key + '">Discuss your project ↗</a><a class="text-link service-detail-link" href="' + base + 'services/' + DIGITAL_SERVICE_SLUGS[key] + '/">Explore ' + escape(title) + ' ↗</a></div></article>' for i,(key,title,description) in enumerate(DIGITAL_SERVICES)) +
         '</div></div></section>')

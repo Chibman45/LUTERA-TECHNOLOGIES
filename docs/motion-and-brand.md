@@ -13,3 +13,7 @@ Verification: browser checks passed for actual moving WebGL geometry, pause/resu
 Performance: no field Core Web Vitals claims are made. Constrained 4x CPU / 1.6 Mbps software-browser lab runs varied and did not consistently achieve the blueprint's 2.5-second LCP goal. Measured layout shift remained below 0.03 in those runs. Desktop scene startup is automatic; mobile and reduced-motion visits load no 3D library. Production field measurements are still needed to establish p75 LCP, CLS and INP.
 
 The existing email-only FormSubmit workflow is preserved. No new database, accounts or purchase flow is introduced.
+
+## SEO/Lighthouse rendering optimization
+
+Repeated box parts now share a unit geometry and are instanced per parent/material. The existing keyboard, equipment details and particles keep their geometry and movement. A browser diagnostic measured 155 draw calls before and 25 after, with 4,792 triangles in both versions. Parents retain their equipment identities for raycasting, and instance buffers are explicitly disposed on teardown. The tablet browser test verifies a real server pick against the batched canvas in addition to touch-swipe protection and DOM hotspots. Automatic 3D eligibility and the restored design are unchanged.

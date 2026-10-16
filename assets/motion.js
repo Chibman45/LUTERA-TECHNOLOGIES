@@ -8,7 +8,7 @@
  const phone=/iPhone|iPod|Android.*Mobile|Windows Phone/i.test(navigator.userAgent);
  let keyboardNavigation=false;
  const script=document.currentScript;
- const sceneURL=new URL('scene.js?v=tablet3d',script.src).href;
+ const sceneURL=new URL('scene.js?v=seo1',script.src).href;
  const header=document.querySelector('header');
  const markScroll=()=>header.classList.toggle('is-scrolled',scrollY>20);
  addEventListener('scroll',markScroll,{passive:true});markScroll();
