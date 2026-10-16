@@ -32,6 +32,7 @@ jobs:
           python scripts/build.py
           python scripts/check.py
           node --check assets/app.js
+          node --check assets/experience.js
           node --check assets/motion.js
           node --check assets/scene.js
       - name: Configure Pages

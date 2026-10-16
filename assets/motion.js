@@ -5,7 +5,7 @@
  const desktop=matchMedia('(min-width: 1025px)');
  const mobileOrTablet=!!navigator.userAgentData?.mobile||/Android|iPad|iPhone|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  const script=document.currentScript;
- const sceneURL=new URL('scene.js',script.src).href;
+ const sceneURL=new URL('scene.js?v=experience1',script.src).href;
  const header=document.querySelector('header');
  const markScroll=()=>header.classList.toggle('is-scrolled',scrollY>20);
  addEventListener('scroll',markScroll,{passive:true});markScroll();
@@ -15,7 +15,7 @@
   document.querySelectorAll('[data-reveal]').forEach(el=>{el.classList.remove('reveal-ready');el.style.removeProperty('--reveal-delay')});
   if(reduced.matches||!('IntersectionObserver' in window))return;
   reveals=new IntersectionObserver(entries=>{for(const entry of entries){if(!entry.isIntersecting)continue;entry.target.classList.add('is-revealed');reveals.unobserve(entry.target)}},{threshold:.1});
-  document.querySelectorAll('section .section-head, section .card, section .category, section .step, section .split > *, section .cta, .page-hero h1, .page-hero p').forEach((el,i)=>{
+  document.querySelectorAll('section .section-head, section .card, section .category, section .step, section .bento-card, section .need-card, section .equipment-card, section .split > *, section .cta, .page-hero h1, .page-hero p').forEach((el,i)=>{
    el.dataset.reveal='';el.classList.add('reveal-ready');el.style.setProperty('--reveal-delay',`${(i%4)*65}ms`);reveals.observe(el);
   });
  }

@@ -37,3 +37,19 @@ The desktop hero uses self-hosted Three.js 0.180.0 to model a laptop, server and
 Internal links, asset paths, image alt text, unique HTML IDs, single h1 headings and JavaScript syntax are checked in CI. Browser tests cover desktop/mobile layout, navigation, required procurement quantities, past-date rejection, captured form payloads and form redirects. Inbox receipt still requires owner activation and confirmation.
 
 Incorporation is pending. No registration, certification, reseller status, stock availability, fixed pricing or customer endorsements are asserted.
+
+## Modern procurement experience
+
+The homepage equipment explorer, business-need selectors and Solutions comparison feed one enquiry list. Customers can change quantities and use a three-step form to email the complete brief. Local equipment photography, asymmetric service layouts, orbital graphics, an interactive timeline and mobile quick actions complete additions 1–10. See `docs/experience-upgrade.md` and `docs/photo-credits.md`.
+
+The list uses functional session storage for equipment IDs/quantities and a predefined business-need ID only. Free-text answers and contact details stay in the live form; no database is used. If storage is blocked, the Continue to quote link can carry equipment selections in its URL. Notices were updated for this behavior.
+
+Run the isolated browser checks with:
+
+```sh
+python -m pip install -r tests/requirements.txt
+python -m playwright install chromium
+python tests/browser_experience.py
+```
+
+The test starts its own static server and intercepts external form submissions, so it sends no email. Set `LUTERA_TEST_URL` to check another deployment. Set `LUTERA_SCREENSHOTS` to an existing output directory to retain screenshots. Desktop 3D, mobile/tablet fallbacks and reduced-motion preferences remain supported.

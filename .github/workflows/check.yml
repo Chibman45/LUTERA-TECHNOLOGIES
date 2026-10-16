@@ -19,5 +19,21 @@ jobs:
       - run: python scripts/build.py
       - run: python scripts/check.py
       - run: node --check assets/app.js
+      - run: node --check assets/experience.js
       - run: node --check assets/motion.js
       - run: node --check assets/scene.js
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build public pages
+        run: python scripts/build.py
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install -r tests/requirements.txt
+          python -m playwright install --with-deps chromium
+      - name: Verify procurement and responsive flows
+        run: python tests/browser_experience.py

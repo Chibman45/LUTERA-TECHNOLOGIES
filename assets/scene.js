@@ -22,7 +22,7 @@ export function mountScene(host) {
  function box(parent,w,h,d,material,x=0,y=0,z=0){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
  function line(points,color=0x00b5f7,opacity=.5){const geometry=new THREE.BufferGeometry().setFromPoints(points.map(v=>new THREE.Vector3(...v)));const material=new THREE.LineBasicMaterial({color,transparent:true,opacity});const mesh=new THREE.Line(geometry,material);assembly.add(mesh);return mesh;}
  // Laptop: individually modeled chassis, keyboard, hinge and illuminated screen.
- const laptop=new THREE.Group();laptop.position.set(-1.1,.15,1);laptop.rotation.y=.15;assembly.add(laptop);
+ const laptop=new THREE.Group();laptop.userData.equipmentId='laptop';laptop.position.set(-1.1,.15,1);laptop.rotation.y=.15;assembly.add(laptop);
  box(laptop,2.45,.13,1.6,metal);
  box(laptop,2.2,.018,1.22,navy,0,.075,-.1);
  for(let row=0;row<5;row++)for(let col=0;col<12;col++)box(laptop,.13,.02,.115,metal,-.97+col*.176,.09,-.6+row*.16);
@@ -36,7 +36,7 @@ export function mountScene(host) {
  for(let i=0;i<3;i++)box(lid,1.55-i*.28,.025,.02,glow,-i*.14,1.2-i*.09,.093);
  box(lid,.07,.025,.025,glow,0,1.49,.07);
  // Server cabinet and modular drive trays.
- const server=new THREE.Group();server.position.set(1.35,1.08,-.65);assembly.add(server);
+ const server=new THREE.Group();server.userData.equipmentId='server';server.position.set(1.35,1.08,-.65);assembly.add(server);
  box(server,1.2,2.65,1.15,navy,0,.24,0);
  box(server,1.24,.08,1.19,metal,0,1.6,0);
  for(let i=0;i<5;i++){
@@ -46,7 +46,7 @@ export function mountScene(host) {
  }
  box(server,.065,.065,.03,glow,0,-.71,.61);
  // Network switch, antennae, port lights.
- const network=new THREE.Group();network.position.set(1.4,.01,1.7);assembly.add(network);
+ const network=new THREE.Group();network.userData.equipmentId='network';network.position.set(1.4,.01,1.7);assembly.add(network);
  box(network,1.3,.27,.75,metal);
  box(network,1.15,.18,.02,navy,0,0,.39);
  for(let i=0;i<6;i++)box(network,.11,.08,.025,glow,-.45+i*.18,0,.408);
@@ -66,7 +66,9 @@ export function mountScene(host) {
  let width=0,height=0,frame=0,last=0,elapsed=0,inView=true,paused=false,disposed=false,tx=0,ty=0;
  const media=matchMedia('(prefers-reduced-motion: reduce)');
  function resize(){width=host.clientWidth;height=host.clientHeight;if(!width||!height)return;renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();draw()}
- function draw(){renderer.render(scene,camera)}
+ const anchors=[['laptop',laptop,.8],['server',server,1],['network',network,.35]].map(([id,group,y])=>({element:host.closest('.visual').querySelector(`[data-hotspot="${id}"]`),group,y}));
+ const projection=new THREE.Vector3();
+ function draw(){renderer.render(scene,camera);for(const anchor of anchors){if(!anchor.element)continue;projection.set(0,anchor.y,0);anchor.group.localToWorld(projection);projection.project(camera);anchor.element.style.left=((projection.x+1)/2*width)+'px';anchor.element.style.top=((-projection.y+1)/2*height)+'px'}}
  function animate(now){frame=0;if(disposed||paused||!inView||document.hidden||media.matches)return;
   if(now-last>=32){elapsed+=Math.min((now-last)/1000,.06);last=now;
    assembly.rotation.y=THREE.MathUtils.lerp(assembly.rotation.y,tx*.26+Math.sin(elapsed*.25)*.07,.05);
@@ -82,13 +84,15 @@ export function mountScene(host) {
  function sync(){if(frame){cancelAnimationFrame(frame);frame=0}if(!disposed&&!paused&&inView&&!document.hidden&&!media.matches){last=performance.now();frame=requestAnimationFrame(animate)}}
  function pointer(e){const r=host.getBoundingClientRect();tx=(e.clientX-r.left)/r.width-.5;ty=(e.clientY-r.top)/r.height-.5}
  function reset(){tx=0;ty=0}
+ const raycaster=new THREE.Raycaster(),cursor=new THREE.Vector2();
+ function pick(e){const rect=host.getBoundingClientRect();cursor.set((e.clientX-rect.left)/rect.width*2-1,-((e.clientY-rect.top)/rect.height)*2+1);raycaster.setFromCamera(cursor,camera);const hit=raycaster.intersectObjects([laptop,server,network],true)[0];if(!hit)return;let target=hit.object;while(target&&!target.userData.equipmentId)target=target.parent;if(target)host.dispatchEvent(new CustomEvent('equipment-select',{bubbles:true,detail:{id:target.userData.equipmentId}}))}
  const observer=new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;sync()},{threshold:.05});observer.observe(host);
  const resizer=new ResizeObserver(resize);resizer.observe(host);
- host.addEventListener('pointermove',pointer,{passive:true});host.addEventListener('pointerleave',reset);
+ host.addEventListener('pointerup',pick);host.addEventListener('pointermove',pointer,{passive:true});host.addEventListener('pointerleave',reset);
  document.addEventListener('visibilitychange',sync);media.addEventListener('change',sync);
  function lost(e){e.preventDefault();dispose();host.dispatchEvent(new Event('scene-unavailable'))}
  canvas.addEventListener('webglcontextlost',lost);
- function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(frame);observer.disconnect();resizer.disconnect();host.removeEventListener('pointermove',pointer);host.removeEventListener('pointerleave',reset);document.removeEventListener('visibilitychange',sync);media.removeEventListener('change',sync);canvas.removeEventListener('webglcontextlost',lost);const geometries=new Set(),materials=new Set();scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material)});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();canvas.remove()}
+ function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(frame);observer.disconnect();resizer.disconnect();host.removeEventListener('pointerup',pick);host.removeEventListener('pointermove',pointer);host.removeEventListener('pointerleave',reset);document.removeEventListener('visibilitychange',sync);media.removeEventListener('change',sync);canvas.removeEventListener('webglcontextlost',lost);const geometries=new Set(),materials=new Set();scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material)});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());renderer.dispose();canvas.remove();anchors.forEach(({element})=>{element?.style.removeProperty('left');element?.style.removeProperty('top')})}
  resize();draw();host.append(canvas);sync();
  return {setPaused(value){paused=value;sync()},dispose};
 }
