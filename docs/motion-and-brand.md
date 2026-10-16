@@ -13,3 +13,13 @@ Verification: browser checks passed for actual moving WebGL geometry, pause/resu
 Performance: no field Core Web Vitals claims are made. Constrained 4x CPU / 1.6 Mbps software-browser lab runs varied and did not consistently achieve the blueprint's 2.5-second LCP goal. Measured layout shift remained below 0.03 in those runs. Desktop scene startup is automatic; mobile and reduced-motion visits load no 3D library. Production field measurements are still needed to establish p75 LCP, CLS and INP.
 
 The existing email-only FormSubmit workflow is preserved. No new database, accounts or purchase flow is introduced.
+
+## Cinematic navigation and the project story
+
+`assets/cinematic.js` and `assets/cinematic.css` add a camera-like transition between same-origin pages. Browsers with cross-document View Transitions use native snapshots with a perspective/dolly effect while the header and floating contact control stay anchored. Browsers without that feature get a brief 220 ms outgoing curtain and a 500 ms reveal. Links retain their real destinations: forms, downloads, external links, anchors, modified clicks and browser back/forward keep their normal behavior. Page restoration clears outgoing state.
+
+The homepage introduces a four-chapter project story: Discover, Design, Build & Connect, and Launch & Support. Native scrolling moves a CSS 3D assembly with a central LUTERA mark, connected modules and progress indicator. Chapter links jump directly to the corresponding text. The scene holds within that section on desktop; it releases at the end. No wheel/touch event hijacking, video, animation framework or extra WebGL canvas is required. Updates run once per scroll/resize frame, with no independent animation loop.
+
+Large screens and qualifying keyboard/trackpad tablets share the story's desktop scene policy. Phones and small touch-only tablets get a compact static illustration and ordinary reading layout. Reduced-motion disables native route animation, the curtain, the pinned scene and camera transforms. A scene pause control holds its current pose while text and links remain available. Data-saver visits skip cinematic motion. All four chapters and quote links remain available with JavaScript disabled.
+
+`python tests/browser_cinematic.py` checks scroll-driven pose changes, sticky behavior, pause/resume, live reduced-motion changes, successful native snapshot capture, fallback navigation, browser back restoration, chapter anchors, quote-list preservation and mobile/no-JavaScript alternatives. Existing procurement and real-WebGL tablet tests remain in CI. Form submissions in the procurement tests are intercepted and send no email.
