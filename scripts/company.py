@@ -35,11 +35,20 @@ def company_details():
         '</dl>' + directions_link() + '</div><div class="company-scope"><h3>Nature of business</h3><p>' +
         escape(NATURE_OF_BUSINESS) + '</p></div></div></section>')
 
+DIGITAL_SERVICE_IMAGES = {
+    'ai': ('ai', 'Abstract AI lettering with connected digital paths'),
+    'software': ('software', 'Software source code displayed on a development laptop'),
+    'data': ('data', 'Analytics dashboard with charts and business metrics'),
+    'cloud': ('servers', 'Connected server racks supporting cloud and integrated systems'),
+}
+
 def digital_services(base):
-    return ('<section class="digital-services"><div class="wrap"><div class="section-head"><div>'
+    return ('<section class="digital-services" id="digital-solutions"><div class="wrap"><div class="section-head"><div>'
         '<div class="eyebrow">AI, SOFTWARE & CONNECTED SYSTEMS</div><h2>Technology for the way<br>your business evolves.</h2></div>'
         '<p>Bring us the process you want to improve, the software you need to build or the systems you need to connect. We’ll discuss the requirements and agree the scope.</p></div>'
-        '<div class="digital-grid">' + ''.join('<article class="card"><span class="mini-label">' + f'{i+1:02} / DIGITAL SOLUTIONS' +
+        '<div class="digital-grid">' + ''.join('<article class="card"><img src="' + base + 'assets/photos/' +
+        DIGITAL_SERVICE_IMAGES[key][0] + '.jpg" width="960" height="640" loading="lazy" decoding="async" alt="' +
+        escape(DIGITAL_SERVICE_IMAGES[key][1], quote=True) + '"><div class="digital-card-copy"><span class="mini-label">' + f'{i+1:02} / DIGITAL SOLUTIONS' +
         '</span><h3>' + escape(title) + '</h3><p>' + escape(description) + '</p><a class="text-link" href="' + base +
-        'request-quote/?category=' + key + '">Discuss your project ↗</a></article>' for i,(key,title,description) in enumerate(DIGITAL_SERVICES)) +
+        'request-quote/?category=' + key + '">Discuss your project ↗</a></div></article>' for i,(key,title,description) in enumerate(DIGITAL_SERVICES)) +
         '</div></div></section>')

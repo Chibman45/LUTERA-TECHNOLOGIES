@@ -49,3 +49,21 @@ footer .company-address{margin:16px 0;font-size:12px;color:#9badc3}
 .digital-grid p{font-size:14px;flex:1}.digital-grid .text-link{margin-top:12px}
 @media(max-width:1100px){.digital-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.company-profile{gap:35px}}
 @media(max-width:760px){.company-profile{grid-template-columns:1fr;gap:28px}.company-scope{padding:25px}.digital-grid{grid-template-columns:1fr}.digital-grid h3{font-size:23px}.company-facts>div{grid-template-columns:92px 1fr;gap:12px}}
+
+/* Solution imagery follows the subject of each service or equipment category. */
+.digital-grid .card{padding:0;overflow:hidden}
+.digital-grid .card>img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;border-bottom:1px solid #dce6f0}
+.digital-card-copy{display:flex;flex:1;flex-direction:column;align-items:flex-start;padding:26px}
+.digital-card-copy p{flex:1}
+.service-solutions-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px}
+.service-solutions-grid .equipment-card{display:flex;flex-direction:column}
+.service-solutions-grid .equipment-card>div{display:flex;flex:1;flex-direction:column;align-items:flex-start}
+.service-solutions-grid .equipment-card p{flex:1;min-height:0}
+.solutions-jump{background:#f4f8fc;border-bottom:1px solid #dce6f0}
+.solutions-jump nav{display:flex;flex-wrap:wrap;gap:12px;padding:22px 0}
+.solutions-jump a{display:block;padding:12px 18px;border:1px solid #cbd9e8;border-radius:30px;color:#1c436f;text-decoration:none;font-size:12px;font-weight:600;background:#fff}
+.solutions-jump a:hover,.solutions-jump a:focus-visible{background:#eaf4ff;border-color:#126bff}
+#digital-solutions,#it-service-solutions,#hardware-solutions{scroll-margin-top:110px}
+.solution-photo-note{margin:0;padding-bottom:24px}
+@media(max-width:1024px){.service-solutions-grid{gap:18px}.service-solutions-grid .equipment-card>div{padding:24px}}
+@media(max-width:760px){.service-solutions-grid{grid-template-columns:1fr;gap:22px}.digital-card-copy{padding:25px}.solutions-jump nav{gap:9px;padding:18px 0}.solutions-jump a{padding:11px 13px;font-size:11px}}

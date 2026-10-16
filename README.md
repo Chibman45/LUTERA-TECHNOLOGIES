@@ -56,3 +56,5 @@ python tests/browser_tablet_3d.py
 The test starts its own static server and intercepts external form submissions, so it sends no email. Set `LUTERA_TEST_URL` to check another deployment. Set `LUTERA_SCREENSHOTS` to an existing output directory to retain screenshots. Desktop/eligible-tablet 3D, phone/small-tablet fallbacks and reduced-motion preferences remain supported. Touch swipes scroll the page without picking equipment; taps and keyboard controls remain available.
 
 Company facts are maintained in `scripts/company.py`, including the owner-supplied Abuja address, administrative location and nature of business. The About and Contact pages, footer and Organization structured data share these details. Digital-service quote links preselect AI, software, data or cloud enquiries without requiring equipment quantities.
+
+The Solutions page covers digital solutions, consulting, procurement/supply and installation/maintenance/support alongside the equipment catalogue and comparison. Subject-specific local imagery supports every solution; AI/software/data/cloud cards share their content and images with the homepage and Services page.

@@ -81,10 +81,13 @@ with sync_playwright() as p:
  q.goto(base+'contact/',wait_until='networkidle')
  saved=q.evaluate("sessionStorage.getItem('lutera_equipment_v1')");assert 'qa@example.com' not in saved;assert 'QA tester' not in saved
  q.locator('#name').fill('QA tester');q.locator('#email').fill('qa@example.com');q.locator('#message').fill('QA ONLY: verify contact transport; do not send.');q.get_by_role('checkbox').check();q.get_by_role('button',name='Send message').click();q.wait_for_url('https://formsubmit.co/**');assert captured[-1]['message']
- # Digital-service links preselect the requested work without requiring hardware quantities.
- for category in ['ai','software','data','cloud']:
-  q.goto(base+'services/',wait_until='domcontentloaded')
-  q.locator('.digital-grid a[href$="category='+category+'"]').click()
+ # Solutions include every service group; digital and consulting/support links preselect the requested work.
+ for category in ['ai','software','data','cloud','consulting','support']:
+  q.goto(base+'solutions/',wait_until='domcontentloaded')
+  assert q.locator('.digital-grid article').count()==4
+  assert q.locator('.service-solutions-grid article').count()==3
+  assert q.locator('#hardware-solutions .equipment-card').count()==6
+  q.locator('main a[href$="category='+category+'"]').first.click()
   q.wait_for_url('**/request-quote/?category='+category)
   assert q.locator('#service_category').input_value()==category
   q.locator('#requirements').fill('Discuss our digital project requirements and an appropriate implementation scope.')
