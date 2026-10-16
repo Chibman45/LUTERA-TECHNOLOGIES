@@ -2,7 +2,8 @@
 (() => {
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
  const fine=matchMedia('(hover: hover) and (pointer: fine)');
- const desktop=matchMedia('(min-width: 900px)');
+ const desktop=matchMedia('(min-width: 1025px)');
+ const mobileOrTablet=!!navigator.userAgentData?.mobile||/Android|iPad|iPhone|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  const script=document.currentScript;
  const sceneURL=new URL('scene.js',script.src).href;
  const header=document.querySelector('header');
@@ -26,29 +27,18 @@
  const host=document.querySelector('[data-hardware-scene]');if(!host)return;
  const button=document.querySelector('[data-motion-toggle]');
  const visual=host.closest('.visual');
- let controller=null,loading=false,failed=false,intersecting=false,userPaused=false,ready=false,manual=false,accelerated=null;
- async function hasAcceleration(){
-  // WebGPU adapter discovery is asynchronous; probing WebGL synchronously can
-  // stall the first paint on software graphics. Unknown devices stay opt-in.
-  if(!navigator.gpu||performance.now()>2500)return false;
-  try{
-   const adapter=await Promise.race([navigator.gpu.requestAdapter({powerPreference:'low-power'}),new Promise(resolve=>setTimeout(()=>resolve(null),250))]);
-   return !!adapter&&!adapter.isFallbackAdapter&&!/swiftshader|software|llvmpipe/i.test(adapter.info?.description||'');
-  }catch{return false}
- }
+ let controller=null,loading=false,failed=false,intersecting=false,userPaused=false,ready=false;
+ function eligibleDesktop(){return desktop.matches&&fine.matches&&!mobileOrTablet&&!reduced.matches&&!navigator.connection?.saveData}
  function fallback(){controller?.dispose();controller=null;visual.classList.remove('scene-loaded');button.hidden=true}
  async function updateScene(){
-  const eligible=desktop.matches&&fine.matches&&!reduced.matches&&!navigator.connection?.saveData;
+  const eligible=eligibleDesktop();
   if(!eligible){fallback();return}
   if(controller||loading||failed||!intersecting||!ready)return;
   loading=true;
   try{
-   if(accelerated===null)accelerated=await hasAcceleration();
-   if(!desktop.matches||reduced.matches||!fine.matches)return;
-   if(!accelerated&&!manual){button.hidden=false;button.textContent='Explore in 3D';return}
    button.disabled=true;
    const {mountScene}=await import(sceneURL);
-   if(!desktop.matches||reduced.matches||!fine.matches)return;
+   if(!eligibleDesktop())return;
    controller=mountScene(host);controller.setPaused(userPaused);
    visual.classList.add('scene-loaded');button.hidden=false;button.textContent=userPaused?'Resume animation':'Pause animation';
   }catch{failed=true;fallback()}finally{loading=false;button.disabled=false}
@@ -56,7 +46,7 @@
  new IntersectionObserver(entries=>{intersecting=entries[0].isIntersecting;if(intersecting)updateScene()},{rootMargin:'120px'}).observe(host);
  for(const media of [reduced,desktop,fine])media.addEventListener('change',updateScene);
  host.addEventListener('scene-unavailable',()=>{failed=true;fallback()});
- button.addEventListener('click',()=>{if(!controller){manual=true;updateScene();return}userPaused=!userPaused;controller?.setPaused(userPaused);visual.closest('.hero').classList.toggle('motion-paused',userPaused);button.setAttribute('aria-pressed',String(userPaused));button.textContent=userPaused?'Resume animation':'Pause animation'});
+ button.addEventListener('click',()=>{if(!controller)return;userPaused=!userPaused;controller?.setPaused(userPaused);visual.closest('.hero').classList.toggle('motion-paused',userPaused);button.setAttribute('aria-pressed',String(userPaused));button.textContent=userPaused?'Resume animation':'Pause animation'});
  addEventListener('pagehide',fallback);
  addEventListener('pageshow',updateScene);
  function afterPaint(){const start=()=>{ready=true;updateScene()};if('requestIdleCallback' in window)requestIdleCallback(start,{timeout:2000});else setTimeout(start,300)}
