@@ -81,6 +81,18 @@ with sync_playwright() as p:
  q.goto(base+'contact/',wait_until='networkidle')
  saved=q.evaluate("sessionStorage.getItem('lutera_equipment_v1')");assert 'qa@example.com' not in saved;assert 'QA tester' not in saved
  q.locator('#name').fill('QA tester');q.locator('#email').fill('qa@example.com');q.locator('#message').fill('QA ONLY: verify contact transport; do not send.');q.get_by_role('checkbox').check();q.get_by_role('button',name='Send message').click();q.wait_for_url('https://formsubmit.co/**');assert captured[-1]['message']
+ # Digital-service links preselect the requested work without requiring hardware quantities.
+ for category in ['ai','software','data','cloud']:
+  q.goto(base+'services/',wait_until='domcontentloaded')
+  q.locator('.digital-grid a[href$="category='+category+'"]').click()
+  q.wait_for_url('**/request-quote/?category='+category)
+  assert q.locator('#service_category').input_value()==category
+  q.locator('#requirements').fill('Discuss our digital project requirements and an appropriate implementation scope.')
+  q.locator('[data-wizard-next]').click()
+  assert q.locator('[data-quote-step="1"]').is_visible()
+  assert not q.locator('#quantity').evaluate('(el)=>el.required')
+  q.locator('#quantity').fill('');q.locator('[data-wizard-next]').click()
+  assert q.locator('[data-quote-step="2"]').is_visible()
  # All public routes and layouts, including comparison horizontal-scroll containment.
  for width in [360,768,1024,1440]:
   q.set_viewport_size({'width':width,'height':900})

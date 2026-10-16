@@ -112,7 +112,7 @@
   form.elements.project_type.addEventListener('change',()=>{businessNeed=Object.hasOwn(needs,form.elements.project_type.value)?form.elements.project_type.value:'';persist()});
   form.addEventListener('input',e=>{e.target.removeAttribute('aria-invalid');if(e.target===date)date.setCustomValidity('');renderReview()});
   if(businessNeed){form.elements.project_type.value=businessNeed;form.elements.requirements.value=needs[businessNeed].brief;form.elements.service_category.value='procurement'}
-  if(['procurement','hardware','consulting','support','other'].includes(query.get('category')))form.elements.service_category.value=query.get('category');
+  if(['procurement','hardware','consulting','support','ai','software','data','cloud','other'].includes(query.get('category')))form.elements.service_category.value=query.get('category');
   else if(items.length)form.elements.service_category.value='procurement';
   quantityRequired();showStep(0,{focus:false});
   form.addEventListener('submit',e=>{

@@ -24,7 +24,7 @@ header{background:#071426f5;color:#fff;border-bottom:1px solid #658ab528}.nav{he
 @media(prefers-reduced-motion:reduce){.reveal-ready{opacity:1;transform:none}.hardware-fallback{animation:none!important}.hero:after{animation:none!important}.hero .visual,.hero-copy>*{animation:none!important}.card.is-tilted,.category.is-tilted,.procurement-art.is-tilted{transform:none!important}.hardware-scene{display:none}.hardware-fallback{opacity:1!important}.motion-toggle{display:none}}
 
 .motion-paused,.motion-paused *,.motion-paused:after{animation-play-state:paused!important}
-@view-transition{navigation:auto}::view-transition-old(root){animation:page-fade-out .15s ease both}::view-transition-new(root){animation:page-fade-in .25s ease both}@keyframes page-fade-out{to{opacity:0}}@keyframes page-fade-in{from{opacity:0}to{opacity:1}}@media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none!important}}
+@view-transition{navigation:auto}::view-transition-old(root){animation:page-fade-out .15s ease both}::view-transition-new(root){animation:page-fade-in .25s ease both}@keyframes page-fade-out{to{opacity:0}}@keyframes page-fade-in{from{opacity:0}to{opacity:1}}@media(prefers-reduced-motion:reduce){@view-transition{navigation:none}::view-transition-old(root),::view-transition-new(root){animation:none!important}}
 /* Keep the mobile fallback still so its visible area settles on first paint. */
 .hardware-fallback{animation:none!important}@media(max-width:1024px){.hero .visual{animation:none}}
 @media(max-width:1024px){.hardware-fallback{filter:none}.hero:before{display:none}.hero:after{animation:none;box-shadow:none}.brand-lockup{filter:none}}
