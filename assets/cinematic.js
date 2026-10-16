@@ -19,7 +19,7 @@
  const base=new URL('../',document.currentScript.src).pathname;
  let navigationTimer=0,navigating=false,destination=null;
  function resetNavigation(){clearTimeout(navigationTimer);navigating=false;destination=null;root.classList.remove('cinema-leaving','cinema-arriving')}
- function enter(){resetNavigation();if(!motionAllowed()||nativeTransitions)return;root.classList.add('cinema-arriving');navigationTimer=setTimeout(resetNavigation,600)}
+ function enter(){if(navigating)return;resetNavigation();if(!motionAllowed()||nativeTransitions)return;root.classList.add('cinema-arriving');navigationTimer=setTimeout(resetNavigation,600)}
  // Browsers without cross-document transitions use a brief CSS curtain. Keep
  // native anchors, downloads, external links and modified clicks untouched.
  document.addEventListener('click',e=>{
@@ -28,7 +28,7 @@
   const url=new URL(a.href,location.href);
   if(url.origin!==location.origin||!url.pathname.startsWith(base)||url.hash||(url.pathname===location.pathname&&url.search===location.search))return;
   if(navigating){e.preventDefault();return}
-  e.preventDefault();navigating=true;destination=url.href;root.classList.remove('cinema-arriving');root.classList.add('cinema-leaving');
+  e.preventDefault();clearTimeout(navigationTimer);navigating=true;destination=url.href;root.classList.remove('cinema-arriving');root.classList.add('cinema-leaving');
   navigationTimer=setTimeout(()=>location.assign(url.href),220);
  });
  addEventListener('pageshow',enter);

@@ -57,6 +57,8 @@ with sync_playwright() as p:
  r=fallback.new_page();r.goto(base+'services/',wait_until='networkidle')
  # Override the feature check on implementations exposing a nonconfigurable property.
  assert not r.evaluate("'onpageswap' in window&&'ViewTransition' in window")
+ # Click during the entry curtain: its cleanup must never cancel the new navigation.
+ r.evaluate("dispatchEvent(new Event('pageshow'))");r.wait_for_timeout(450)
  r.locator('header a[href$="about/"]').evaluate('(a)=>a.click()')
  assert r.locator('html').evaluate("e=>e.classList.contains('cinema-leaving')")
  r.wait_for_url('**/about/');r.wait_for_load_state('networkidle')
