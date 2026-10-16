@@ -40,7 +40,7 @@ Incorporation is pending. No registration, certification, reseller status, stock
 
 ## Modern procurement experience
 
-The homepage equipment explorer, business-need selectors and Solutions comparison feed one enquiry list. Customers can change quantities and use a three-step form to email the complete brief. Local equipment photography, asymmetric service layouts, orbital graphics, an interactive timeline and mobile quick actions complete additions 1–10. See `docs/experience-upgrade.md` and `docs/photo-credits.md`.
+The homepage equipment explorer, business-need selectors and Solutions comparison feed one enquiry list. Customers can change quantities and use a three-step form to email the complete brief. Local equipment photography, asymmetric service layouts, orbital graphics, an interactive timeline and a floating quote and WhatsApp contact icon complete additions 1–10. See `docs/experience-upgrade.md` and `docs/photo-credits.md`.
 
 The list uses functional session storage for equipment IDs/quantities and a predefined business-need ID only. Free-text answers and contact details stay in the live form; no database is used. If storage is blocked, the Continue to quote link can carry equipment selections in its URL. Notices were updated for this behavior.
 

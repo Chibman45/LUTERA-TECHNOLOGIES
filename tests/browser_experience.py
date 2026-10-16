@@ -87,9 +87,15 @@ with sync_playwright() as p:
   for route in ['', 'solutions/','request-quote/','contact/','services/it-procurement/']:
    q.goto(base+route,wait_until='domcontentloaded')
    assert q.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,route)
-   if width<=1024:
-    if route in ['request-quote/','contact/']:assert not q.locator('.mobile-quick-actions').is_visible()
-    else:assert q.locator('.mobile-quick-actions').is_visible()
+   toggle=q.locator('.floating-contact-toggle');options=q.locator('.floating-contact-options')
+   assert toggle.is_visible() and not options.is_visible()
+   rect=toggle.bounding_box();assert rect['x']>width/2 and rect['y']>750,(width,route,rect)
+   toggle.click();assert options.is_visible()
+   assert q.get_by_role('link',name='WhatsApp chat',exact=False).last.get_attribute('href')=='https://wa.me/2349026276130'
+   assert q.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,route,'expanded contact')
+   q.keyboard.press('Escape');assert not options.is_visible()
+   assert toggle.evaluate('(el)=>el===document.activeElement')
+   toggle.click();q.locator('h1').click();assert not options.is_visible()
  q.set_viewport_size({'width':1440,'height':1000});q.goto(base,wait_until='networkidle')
  
  if os.environ.get('LUTERA_SCREENSHOTS'):q.screenshot(path=os.environ['LUTERA_SCREENSHOTS']+'/desktop.png',full_page=True)
@@ -101,11 +107,13 @@ with sync_playwright() as p:
  nojs=b.new_context(java_script_enabled=False,viewport={'width':1440,'height':1000});r=nojs.new_page();r.goto(base+'request-quote/')
  assert r.locator('[data-quote-step]:visible').count()==3
  assert r.locator('#rfq-form').get_attribute('method')=='POST'
+ r.locator('.floating-contact-toggle').click();assert r.locator('.floating-contact-options').is_visible()
+ assert r.locator('.floating-quote-link').get_attribute('href')== '/LUTERA-TECHNOLOGIES/request-quote/'
  nojs.close()
  # Storage restrictions retain the current list and pass it to the quote URL.
- limited=b.new_context(viewport={'width':1440,'height':1000},reduced_motion='reduce');r=limited.new_page();r.add_init_script("Storage.prototype.setItem=function(){throw new Error('blocked')};Storage.prototype.getItem=function(){throw new Error('blocked')};");r.goto(base+'solutions/',wait_until='networkidle');r.locator('[data-add="laptop"]').first.click();r.locator('[data-open-enquiry]').first.click();r.locator('[data-continue-quote]').click();r.wait_for_url('**/request-quote/**');assert 'Business laptops' in r.locator('[data-quote-list]').inner_text();limited.close()
+ limited=b.new_context(viewport={'width':1440,'height':1000},reduced_motion='reduce');r=limited.new_page();r.add_init_script("Storage.prototype.setItem=function(){throw new Error('blocked')};Storage.prototype.getItem=function(){throw new Error('blocked')};");r.goto(base+'solutions/',wait_until='networkidle');r.locator('[data-add="laptop"]').first.click();r.locator('.floating-contact-toggle').click();r.locator('.floating-quote-link').click();r.wait_for_url('**/request-quote/**');assert 'items=laptop' in r.url;assert 'Business laptops' in r.locator('[data-quote-list]').inner_text();limited.close()
  assert not errors,errors
  b.close()
-print('PASS: all interactive features, cross-page enquiry persistence, quantity validation, comparison controls, step validation/back navigation, structured email POST, contact POST, privacy of storage, all responsive widths, no-JS form and storage-blocked quote fallback. Test email sends were intercepted.')
+print('PASS: all interactive features, cross-page enquiry persistence, quantity validation, comparison controls, step validation/back navigation, structured email POST, contact POST, privacy of storage, all responsive widths, floating contact disclosure and links, no-JS form and storage-blocked quote fallback. Test email sends were intercepted.')
 
 if server:server.shutdown()

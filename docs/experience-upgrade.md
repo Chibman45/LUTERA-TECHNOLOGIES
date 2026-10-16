@@ -9,7 +9,7 @@
 7. **Equipment comparison:** laptop, desktop/all-in-one and workstation comparison with two or three selectable columns and add-to-enquiry actions. The guidance does not claim model availability or fixed pricing.
 8. **Procurement timeline:** four keyboard-accessible stages with context and preparation checklists, on the homepage and procurement page.
 9. **Equipment photography:** locally served Unsplash equipment/workplace imagery, consistent styling, representative-image notices and source/license records in photo-credits.md.
-10. **Mobile actions:** safe-area-aware quote and WhatsApp controls, hidden on active quote/contact pages so forms remain unobstructed. Desktop and eligible large/keyboard/trackpad tablets use automatic 3D; phones and small touch-only tablets retain the illustration.
+10. **Floating contact:** a compact lower-right icon opens quote and WhatsApp links on every screen size, with safe-area spacing, keyboard support and a native no-JavaScript disclosure. Desktop and eligible large/keyboard/trackpad tablets use automatic 3D; phones and small touch-only tablets retain the illustration.
 
 ## Delivery and privacy
 

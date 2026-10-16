@@ -34,13 +34,19 @@
   const note=$('#enquiry-list-note');if(note)note.textContent=storageAvailable?'Your equipment list is kept in this browser tab. Contact details and free-text answers are not saved.':'Browser storage is unavailable. Use Continue to quote to carry this list in the page link, or copy it before leaving.';
   renderQuoteList();
  }
+ // Native disclosure keeps both contact links available even without JavaScript.
+ const contact=$('.floating-contact'),contactToggle=$('.floating-contact-toggle');
+ function closeContact({focus=false}={}){if(!contact?.open)return;contact.open=false;if(focus)contactToggle.focus()}
+ document.addEventListener('click',e=>{if(!contact?.contains(e.target))closeContact()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&contact?.open){closeContact({focus:true});e.preventDefault()}});
+ contact?.addEventListener('focusout',e=>{if(e.relatedTarget&&!contact.contains(e.relatedTarget))closeContact()});
  const dialog=$('#enquiry-dialog');let returnFocus=null;
  function renderDrawer(){
   $('#enquiry-items').innerHTML=items.length?'<ul class="enquiry-lines">'+items.map(i=>`<li><div><b>${escape(catalog[i.id].title)}</b><button class="text-button" type="button" data-remove="${i.id}" aria-label="Remove ${escape(catalog[i.id].title)}">Remove</button></div><label>Quantity<input type="number" min="1" max="1000000" step="1" value="${i.quantity}" data-item-quantity="${i.id}" aria-label="Quantity for ${escape(catalog[i.id].title)}"></label></li>`).join('')+'</ul>':`<div class="empty-enquiry"><span aria-hidden="true">+</span><h3>Your next setup starts here.</h3><p>Add equipment from Solutions, compare options, or go straight to the quote form and describe what you need.</p></div>`;
   $('[data-clear-enquiry]').disabled=!items.length;$('[data-copy-enquiry]').disabled=!items.length;updateCounts();
  }
- function openDrawer(){renderDrawer();returnFocus=document.activeElement;if(dialog.showModal){if(!dialog.open)dialog.showModal()}else{dialog.setAttribute('open','');dialog.setAttribute('role','dialog')}document.body.classList.add('drawer-open');$('.enquiry-toast').hidden=true;$('[data-close-enquiry]').focus()}
- function restoreFocus(){const target=returnFocus?.isConnected&&returnFocus.getClientRects().length?returnFocus:$('.enquiry-nav')?.getClientRects().length?$('.enquiry-nav'):$('.mobile-quote-link');target?.focus()}
+ function openDrawer(){closeContact();renderDrawer();returnFocus=document.activeElement;if(dialog.showModal){if(!dialog.open)dialog.showModal()}else{dialog.setAttribute('open','');dialog.setAttribute('role','dialog')}document.body.classList.add('drawer-open');$('.enquiry-toast').hidden=true;$('[data-close-enquiry]').focus()}
+ function restoreFocus(){const target=returnFocus?.isConnected&&returnFocus.getClientRects().length?returnFocus:$('.enquiry-nav')?.getClientRects().length?$('.enquiry-nav'):contactToggle;target?.focus()}
  function closeDrawer(){if(dialog.close)dialog.close();else dialog.removeAttribute('open');document.body.classList.remove('drawer-open');restoreFocus()}
  dialog.addEventListener('close',()=>{document.body.classList.remove('drawer-open');restoreFocus()});
  dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeDrawer()}});
