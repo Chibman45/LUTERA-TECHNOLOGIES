@@ -20,6 +20,7 @@ jobs:
       - run: python scripts/check.py
       - run: python scripts/check_seo.py
       - run: python scripts/submit_indexnow.py
+      - run: node --check assets/consent.js
       - run: node --check assets/app.js
       - run: node --check assets/experience.js
       - run: node --check assets/motion.js
@@ -44,3 +45,5 @@ jobs:
         run: python tests/browser_experience.py
       - name: Verify tablet 3D and touch interaction
         run: python tests/browser_tablet_3d.py
+      - name: Verify first-visit cookie choices and privacy controls
+        run: python tests/browser_consent.py

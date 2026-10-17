@@ -51,6 +51,7 @@ python -m pip install -r tests/requirements.txt
 python -m playwright install chromium
 python tests/browser_experience.py
 python tests/browser_tablet_3d.py
+python tests/browser_consent.py
 ```
 
 The test starts its own static server and intercepts external form submissions, so it sends no email. Set `LUTERA_TEST_URL` to check another deployment. Set `LUTERA_SCREENSHOTS` to an existing output directory to retain screenshots. Desktop/eligible-tablet 3D, phone/small-tablet fallbacks and reduced-motion preferences remain supported. Touch swipes scroll the page without picking equipment; taps and keyboard controls remain available.
@@ -73,3 +74,9 @@ python scripts/submit_indexnow.py # validates only; sends nothing
 ```
 
 The 3D renderer uses a cost-based frame/resolution budget on slow GPUs and avoids duplicate resize renders. Phones and touch-only layouts display text and cards directly instead of initializing scroll reveals. This preserves the existing 3D eligibility and restored page design.
+
+## Cookie preferences
+
+Every page includes a non-modal first-visit notice with equally prominent Accept optional and Reject optional controls. Cookie settings in the footer reopens it. `assets/consent.js` stores only the choice, notice version and choice/expiry timestamps in `lutera_cookie_consent_v1` local storage for 180 days. Expiry, invalid records or cleared storage show the notice again; blocked storage preserves the current page's choice only. Tabs synchronize preference changes. Essential enquiry-list storage and forms work after either choice.
+
+No optional analytics, advertising cookies or tracking scripts are installed, even after acceptance. This notice does not control cookies used on separate FormSubmit, reCAPTCHA or WhatsApp websites. Adding optional tracking later requires gating initialization on a valid acceptance, stopping it on withdrawal and revising the notice/version and policy; acceptance alone currently enables nothing. The cookie and privacy pages document the actual storage and third-party behavior.

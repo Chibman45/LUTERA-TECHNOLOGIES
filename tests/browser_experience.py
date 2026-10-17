@@ -19,6 +19,7 @@ with sync_playwright() as p:
  c=b.new_context(viewport={'width':1440,'height':1000},reduced_motion='reduce')
  q=c.new_page();errors=[];q.on('pageerror',lambda e:errors.append(str(e)))
  q.goto(base,wait_until='networkidle')
+ q.get_by_role('button',name='Reject optional',exact=True).click()
  assert not errors,errors
  assert q.locator('.services-bento .bento-card').count()==4
  q.get_by_role('button',name='Explore business laptops',exact=True).click()
