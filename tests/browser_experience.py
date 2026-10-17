@@ -14,11 +14,15 @@ if not base:
  server=ThreadingHTTPServer(('127.0.0.1',0),partial(Handler,directory=str(ROOT)))
  threading.Thread(target=server.serve_forever,daemon=True).start()
  base=f'http://127.0.0.1:{server.server_port}/LUTERA-TECHNOLOGIES/' 
+# Programmatic route jumps here represent internal browsing within the visit.
+def visit(page,url,**options):
+ return page.goto(url,referer=base,**options)
+
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path=shutil.which('chromium') or None,args=['--no-sandbox'])
  c=b.new_context(viewport={'width':1440,'height':1000},reduced_motion='reduce')
  q=c.new_page();errors=[];q.on('pageerror',lambda e:errors.append(str(e)))
- q.goto(base,wait_until='networkidle')
+ visit(q,base,wait_until='networkidle')
  q.get_by_role('button',name='Reject optional',exact=True).click()
  assert not errors,errors
  assert q.locator('.services-bento .bento-card').count()==4
@@ -30,7 +34,7 @@ with sync_playwright() as p:
  q.locator('#tab-server').press('ArrowRight');assert q.locator('#tab-network').get_attribute('aria-selected')=='true'
  q.get_by_role('tab',name='04 Agree next steps',exact=False).click()
  assert 'Agree the scope' in q.locator('[data-stage-title]').inner_text()
- q.goto(base+'solutions/',wait_until='networkidle')
+ visit(q,base+'solutions/',wait_until='networkidle')
  q.locator('[data-add="laptop"]').first.click()
  q.locator('[data-add="server"]').first.click()
  q.locator('[data-open-enquiry]').first.click()
@@ -48,7 +52,7 @@ with sync_playwright() as p:
  assert q.locator('[data-compare="desktop"]').is_checked()
  assert 'at least two' in q.locator('.compare-feedback').inner_text()
  # The same list persists across pages and use-case selection seeds the brief.
- q.goto(base+'request-quote/?need=office',wait_until='networkidle')
+ visit(q,base+'request-quote/?need=office',wait_until='networkidle')
  assert q.locator('[data-quote-step="0"]').is_visible()
  assert q.locator('[data-quote-step="1"]').is_hidden()
  assert q.locator('#project_type').input_value()=='office'
@@ -79,12 +83,12 @@ with sync_playwright() as p:
  assert payload['quantity']==['6'];assert payload['email']==['qa@example.com'];assert payload['privacy_acknowledged_at'];assert 'New office setup' in payload['enquiry_summary'][0]
  # Free text and contact information never enter session storage.
  saved=q.evaluate("sessionStorage.getItem('lutera_equipment_v1')") if q.url.startswith(base) else None
- q.goto(base+'contact/',wait_until='networkidle')
+ visit(q,base+'contact/',wait_until='networkidle')
  saved=q.evaluate("sessionStorage.getItem('lutera_equipment_v1')");assert 'qa@example.com' not in saved;assert 'QA tester' not in saved
  q.locator('#name').fill('QA tester');q.locator('#email').fill('qa@example.com');q.locator('#message').fill('QA ONLY: verify contact transport; do not send.');q.get_by_role('checkbox').check();q.get_by_role('button',name='Send message').click();q.wait_for_url('https://formsubmit.co/**');assert captured[-1]['message']
  # Solutions include every service group; digital and consulting/support links preselect the requested work.
  for category in ['ai','software','data','cloud','consulting','support']:
-  q.goto(base+'solutions/',wait_until='domcontentloaded')
+  visit(q,base+'solutions/',wait_until='domcontentloaded')
   assert q.locator('.digital-grid article').count()==4
   assert q.locator('.service-solutions-grid article').count()==3
   assert q.locator('#hardware-solutions .equipment-card').count()==6
@@ -101,7 +105,7 @@ with sync_playwright() as p:
  for width in [360,768,1024,1440]:
   q.set_viewport_size({'width':width,'height':900})
   for route in ['', 'solutions/','request-quote/','contact/','services/it-procurement/','services/ai-automation/','services/software-development/','services/data-analytics/','services/cloud-integration/']:
-   q.goto(base+route,wait_until='domcontentloaded')
+   visit(q,base+route,wait_until='domcontentloaded')
    assert q.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,route)
    toggle=q.locator('.floating-contact-toggle');options=q.locator('.floating-contact-options')
    assert toggle.is_visible() and not options.is_visible()
@@ -112,7 +116,7 @@ with sync_playwright() as p:
    q.keyboard.press('Escape');assert not options.is_visible()
    assert toggle.evaluate('(el)=>el===document.activeElement')
    toggle.click();q.locator('h1').click();assert not options.is_visible()
- q.set_viewport_size({'width':1440,'height':1000});q.goto(base,wait_until='networkidle')
+ q.set_viewport_size({'width':1440,'height':1000});visit(q,base,wait_until='networkidle')
  
  if os.environ.get('LUTERA_SCREENSHOTS'):q.screenshot(path=os.environ['LUTERA_SCREENSHOTS']+'/desktop.png',full_page=True)
  q.set_viewport_size({'width':390,'height':844});

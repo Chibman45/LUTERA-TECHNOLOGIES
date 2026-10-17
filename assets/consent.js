@@ -5,15 +5,23 @@
  const settings=[...document.querySelectorAll('[data-cookie-settings]')];
  const current=panel.querySelector('#cookie-current');
  const feedback=document.querySelector('#cookie-feedback');
- const key='lutera_cookie_consent_v1',version=1,lifetime=180*24*60*60*1000;
+ const key='lutera_cookie_consent_session_v2',version=2;
+ const site=new URL('../',document.currentScript.src);
+ // A fresh entry asks again, including returning from another website or
+ // entering the address directly. Internal navigation and reloads keep the
+ // current tab's choice. Do not reuse the former 180-day preference.
+ try{localStorage.removeItem('lutera_cookie_consent_v1')}catch{}
+ const navigation=performance.getEntriesByType('navigation')[0]?.type||'navigate';
+ let internalReferrer=false;
+ try{const referrer=new URL(document.referrer);internalReferrer=referrer.origin===site.origin&&referrer.pathname.startsWith(site.pathname)}catch{}
+ if(navigation==='navigate'&&!internalReferrer){try{sessionStorage.removeItem(key)}catch{}}
  let choice=null,returnFocus=null,feedbackTimer;
  function read(){
   try{
-   const value=JSON.parse(localStorage.getItem(key));
+   const value=JSON.parse(sessionStorage.getItem(key));
    const now=Date.now();
    if(value?.version===version&&['accepted','rejected'].includes(value.choice)&&
-      Number.isFinite(value.chosenAt)&&Number.isFinite(value.expiresAt)&&
-      value.chosenAt<=now&&value.expiresAt>now&&value.expiresAt-value.chosenAt===lifetime)return value;
+      Number.isFinite(value.chosenAt)&&value.chosenAt<=now)return value;
   }catch{}
   return null;
  }
@@ -42,18 +50,19 @@
   const button=event.target.closest('[data-cookie-choice]');
   if(!button)return;
   const chosenAt=Date.now();
-  choice={version,choice:button.dataset.cookieChoice,chosenAt,expiresAt:chosenAt+lifetime};
+  choice={version,choice:button.dataset.cookieChoice,chosenAt};
   let saved=true;
-  try{localStorage.setItem(key,JSON.stringify(choice))}catch{saved=false}
+  try{sessionStorage.setItem(key,JSON.stringify(choice))}catch{saved=false}
   hide();
   feedback.textContent=(choice.choice==='rejected'?'Optional cookies rejected.':'Privacy preference accepted. No optional cookies are currently used.')+
-   (saved?' You can change your choice in Cookie settings.':' Browser storage is blocked, so this choice lasts for the current page only.');
+   (saved?' This choice applies to this visit. Change it in Cookie settings.':' Browser storage is blocked, so this choice lasts for the current page only.');
   clearTimeout(feedbackTimer);feedbackTimer=setTimeout(()=>{feedback.textContent=''},6000);
  });
  panel.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&choice){event.preventDefault();hide()}
  });
  window.addEventListener('storage',event=>{
+  if(event.storageArea!==sessionStorage)return;
   if(event.key!==key&&event.key!==null)return;
   choice=read();
   if(choice)hide();else show();

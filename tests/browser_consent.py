@@ -6,7 +6,7 @@ import json, os, shutil, threading
 from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parents[1]
-KEY='lutera_cookie_consent_v1'
+KEY='lutera_cookie_consent_session_v2'
 class Handler(SimpleHTTPRequestHandler):
  def translate_path(self,path):return super().translate_path(path.removeprefix('/LUTERA-TECHNOLOGIES'))
  def log_message(self,*args):pass
@@ -27,7 +27,7 @@ with sync_playwright() as p:
  page.goto(base,wait_until='networkidle')
  panel=page.get_by_role('dialog',name='Cookies & your privacy')
  assert panel.is_visible()
- assert page.evaluate('(key)=>localStorage.getItem(key)',KEY) is None
+ assert page.evaluate('(key)=>sessionStorage.getItem(key)',KEY) is None
  assert page.locator('body').evaluate('(e)=>getComputedStyle(e).overflow')!='hidden'
  assert not panel.evaluate('(e)=>e.contains(document.activeElement)'), 'Automatic notice must not steal focus'
  for width,height in [(320,568),(360,740),(390,844),(768,1024),(1024,768),(1440,1000),(568,320)]:
@@ -42,39 +42,48 @@ with sync_playwright() as p:
   if os.environ.get('LUTERA_CONSENT_SCREENSHOTS') and width in [390,1440]:
    page.screenshot(path=f"{os.environ['LUTERA_CONSENT_SCREENSHOTS']}/consent-{width}.png")
  page.set_viewport_size({'width':1440,'height':1000})
- # Reject works by keyboard, persists across pages/reloads/new tabs, and is reversible.
+ # Reject works by keyboard, persists within the visit, and is reversible.
  page.get_by_role('button',name='Reject optional').focus();page.keyboard.press('Enter')
  assert not panel.is_visible()
  assert 'rejected' in page.locator('#cookie-feedback').inner_text()
- saved=page.evaluate('(key)=>JSON.parse(localStorage.getItem(key))',KEY)
- assert saved['choice']=='rejected' and saved['version']==1
- assert saved['expiresAt']-saved['chosenAt']==180*24*60*60*1000
- assert set(saved)=={'version','choice','chosenAt','expiresAt'}
+ saved=page.evaluate('(key)=>JSON.parse(sessionStorage.getItem(key))',KEY)
+ assert saved['choice']=='rejected' and saved['version']==2
+ assert set(saved)=={'version','choice','chosenAt'}
  assert context.cookies()==[], 'Consent stores only an essential local preference, not cookies'
  page.reload(wait_until='networkidle');assert not panel.is_visible()
- page.goto(base+'solutions/',wait_until='networkidle');assert not panel.is_visible()
+ page.get_by_role('link',name='Solutions',exact=True).first.click();page.wait_for_load_state('networkidle');assert not panel.is_visible()
  page.locator('[data-cookie-settings]').click()
  assert panel.is_visible() and 'rejected' in page.locator('#cookie-current').inner_text()
  assert page.get_by_role('button',name='Accept optional').evaluate('(e)=>e===document.activeElement')
  page.keyboard.press('Escape');assert not panel.is_visible()
  assert page.locator('[data-cookie-settings]').evaluate('(e)=>e===document.activeElement')
  page.locator('[data-cookie-settings]').click();page.get_by_role('button',name='Accept optional').click()
- assert page.evaluate('(key)=>JSON.parse(localStorage.getItem(key)).choice',KEY)=='accepted'
+ assert page.evaluate('(key)=>JSON.parse(sessionStorage.getItem(key)).choice',KEY)=='accepted'
  assert not panel.is_visible()
  assert 'No optional cookies' in page.locator('#cookie-feedback').inner_text()
+ # Fresh tabs and fresh direct entries must ask even after an earlier acceptance.
  second=context.new_page();second.goto(base+'contact/',wait_until='networkidle')
- assert not second.locator('#cookie-consent').is_visible()
- # Another tab's withdrawal updates the open settings panel without a reload.
- page.locator('[data-cookie-settings]').click()
- second.locator('[data-cookie-settings]').click();second.get_by_role('button',name='Reject optional').click()
- page.wait_for_function("document.querySelector('#cookie-consent').hidden")
- # Expired, malformed and future-version preferences cannot suppress the notice.
- for value in ['not-json',json.dumps({'version':999,'choice':'accepted'}),json.dumps({'version':1,'choice':'rejected','chosenAt':0,'expiresAt':1})]:
-  page.evaluate('([key,value])=>localStorage.setItem(key,value)',[KEY,value])
+ assert second.locator('#cookie-consent').is_visible()
+ second.get_by_role('button',name='Reject optional').click()
+ assert page.evaluate('(key)=>JSON.parse(sessionStorage.getItem(key)).choice',KEY)=='accepted'
+ second.close()
+ page.goto(base,wait_until='networkidle');assert panel.is_visible()
+ page.get_by_role('button',name='Reject optional').click()
+ # Returning through a link outside this project is another fresh visit.
+ page.route('**/other-project/',lambda route:route.fulfill(body=f'<a href="{base}">Return to LUTERA</a>',content_type='text/html'))
+ page.goto(base+'../other-project/');page.get_by_role('link',name='Return to LUTERA').click()
+ page.wait_for_load_state('networkidle');assert panel.is_visible()
+ # Old persistent approval cannot suppress the visit notice.
+ page.evaluate("localStorage.setItem('lutera_cookie_consent_v1',JSON.stringify({version:1,choice:'accepted',chosenAt:Date.now(),expiresAt:Date.now()+15552000000}))")
+ page.reload(wait_until='networkidle');assert panel.is_visible()
+ assert page.evaluate("localStorage.getItem('lutera_cookie_consent_v1')") is None
+ # Malformed, future-dated and future-version preferences cannot suppress the notice.
+ for value in ['not-json',json.dumps({'version':999,'choice':'accepted'}),json.dumps({'version':2,'choice':'rejected','chosenAt':9999999999999})]:
+  page.evaluate('([key,value])=>sessionStorage.setItem(key,value)',[KEY,value])
   page.reload(wait_until='networkidle');assert panel.is_visible()
   page.keyboard.press('Escape');assert panel.is_visible(), 'No implicit first-visit acceptance'
  assert not errors,errors
- assert all(url.startswith(base) for url in requests),requests
+ assert all(url.startswith(base) or '/other-project/' in url for url in requests),requests
  context.close()
  # Blocked browser storage must not break either choice, enquiry lists or navigation.
  for label in ['Accept optional','Reject optional']:
@@ -96,7 +105,7 @@ with sync_playwright() as p:
  q=nojs.new_page();q.goto(base+'cookies/')
  assert not q.locator('#cookie-consent').is_visible()
  assert not q.locator('[data-cookie-settings]').is_visible()
- assert '180 days' in q.locator('main').inner_text()
+ assert 'each fresh visit' in q.locator('main').inner_text()
  nojs.close();browser.close()
 if server:server.shutdown()
-print('PASS first-visit notice, equal choices, responsive layout, keyboard access, 180-day preference, changing/withdrawing consent, cross-tab sync, expiry/invalid storage, blocked storage, no tracking requests and no-JS policy.')
+print('PASS first-visit notice, equal choices, responsive layout, keyboard access, visit-only preference, changing/withdrawing consent, independent new tabs, direct/external fresh entry, legacy preference removal, invalid storage, blocked storage, no tracking requests and no-JS policy.')
