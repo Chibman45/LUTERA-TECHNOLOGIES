@@ -14,7 +14,7 @@ from experience import enhance, chrome
 ROOT = Path(__file__).resolve().parents[1]
 BASE = os.environ.get('SITE_BASE', '/LUTERA-TECHNOLOGIES/').rstrip('/') + '/'
 ORIGIN = os.environ.get('SITE_ORIGIN', 'https://chibman45.github.io').rstrip('/')
-REV = 'cards1'
+REV = 'services2'
 
 ICONS = {
  'procurement':'<path d="M9 5H5v16h14V5h-4M9 3h6v5H9Z"/><path d="m8 14 3 3 5-6"/>',
@@ -78,12 +78,7 @@ hero=(f'<section class="hero hero--photographic" data-hero aria-labelledby="hero
       '<p>Built around your organisation. From equipment supply and computer labs to AI, software, data and cloud, we plan, source, build and support the technology your work depends on.</p>'
       '<div class="actions">'+btn('request-quote','Request a quote')+link('services','Explore our services ↗','text-link')+'</div></div>'
       '<div class="hero-panel"><div class="hero-panel-copy"><h2>Supply. Build. Connect.</h2><p>One considered approach.<br>From your first brief to ongoing support.</p></div></div></div>'
-      '<div class="wrap hero-footer"><p class="hero-photo-note">Representative technology photography.</p><div class="hero-controls" role="group" aria-label="Hero image controls" hidden>'
-      '<button type="button" class="hero-control" data-hero-previous aria-label="Previous technology image" title="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>'
-      '<span class="hero-counter" data-hero-counter aria-label="Image 1 of 3">1 / 3</span>'
-      '<button type="button" class="hero-control" data-hero-next aria-label="Next technology image" title="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>'
-      '<button type="button" class="hero-control" data-hero-pause aria-label="Pause background motion" title="Pause background motion" aria-pressed="false"><svg data-hero-pause-icon viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg><svg data-hero-play-icon viewBox="0 0 24 24" aria-hidden="true" hidden><path d="m9 5 10 7-10 7Z"/></svg></button>'
-      '</div><span class="sr-only" data-hero-status role="status" aria-live="polite"></span></div>'
+      '<div class="wrap hero-footer"><p class="hero-photo-note">Representative technology photography.</p></div>'
       '<script id="hero-scenes" type="application/json">'+hero_manifest+'</script></section>')
 service_section='<section class="home-services" id="our-services"><div class="wrap"><div class="section-head"><h2>Eight services.<br>One place to start.</h2><p>Choose the expertise your project needs. Every service starts with your organisation, your users and a clear scope.</p></div>'+service_cards(BASE,icon)+'</div></section>'
 home=hero+service_section
@@ -158,7 +153,7 @@ def brand(dark=False):
     variant='dark' if dark else 'light'
     return f'<a class="brand" href="{url()}" aria-label="Lutera home"><img class="brand-lockup" src="{BASE}assets/logo/lutera-horizontal-{variant}.svg" width="112" height="32" alt="Lutera"></a>'
 
-footer='<footer data-theme="dark"><div class="wrap"><div class="footer-grid"><div>'+brand(True)+'<p>Hardware, software and intelligent systems.<br>Built around your organisation.</p><p class="footer-company">'+escape(COMPANY['legal_name'])+'</p></div><div><h2>Explore</h2>'+''.join(link(r,label) for r,label in [('about','About Lutera'),('services','Services'),('solutions','Solutions'),('request-quote','Request a quote'),('contact','Contact')])+'</div><div class="footer-services"><h2>Our services</h2>'+''.join(link('services/'+s['slug'],escape(s['title'])) for s in SERVICES)+'</div><div><h2>Let’s connect</h2><a href="mailto:'+COMPANY['email']+'">'+COMPANY['email']+'</a><a href="tel:'+COMPANY['phone']+'">'+COMPANY['display_phone']+'</a>'+address_block()+'</div></div><div class="footer-bottom"><span>© 2026 '+escape(COMPANY['legal_name'])+'</span><div>'+link('privacy','Privacy')+link('terms','Terms')+link('cookies','Cookies')+'<button class="cookie-settings" type="button" data-cookie-settings aria-controls="cookie-consent" hidden>Cookie settings</button></div></div></div></footer>'
+footer='<footer data-theme="dark"><div class="wrap"><div class="footer-grid"><div>'+brand(True)+'<p>Hardware, software and intelligent systems.<br>Built around your organisation.</p><p class="footer-company">'+escape(COMPANY['legal_name'])+'</p></div><div><h2>Explore</h2>'+''.join(link(r,label) for r,label in [('about','About Lutera'),('services','Services'),('solutions','Solutions'),('request-quote','Request a quote'),('contact','Contact')])+'</div><div class="footer-services"><h2>Our services</h2>'+''.join(link('services/'+s['slug'],escape(s['title'])) for s in SERVICES)+'</div><div><h2>Let’s connect</h2><a href="mailto:'+COMPANY['email']+'">'+COMPANY['email']+'</a><a href="tel:'+COMPANY['phone']+'">'+COMPANY['display_phone']+'</a>'+address_block()+'</div></div><div class="footer-bottom"><span>© 2026 '+escape(COMPANY['legal_name'])+'</span><div>'+link('privacy','Privacy')+link('terms','Terms')+link('cookies','Cookies')+'<button class="cookie-settings" type="button" data-cookie-settings aria-controls="cookie-consent" hidden>Cookie settings</button><button class="motion-settings" type="button" data-motion-toggle aria-pressed="false" hidden>Pause background animation</button></div></div></div></footer>'
 def responsive_photos(markup):
     def optimise(match):
         tag=match.group()
