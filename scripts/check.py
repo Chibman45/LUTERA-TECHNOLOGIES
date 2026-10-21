@@ -1,12 +1,14 @@
 from pathlib import Path
 from html.parser import HTMLParser
+import json
 from urllib.parse import urlsplit,unquote
 ROOT=Path(__file__).resolve().parents[1]
 errors=[]
 class Check(HTMLParser):
- def __init__(self,file):super().__init__();self.file=file;self.ids=[];self.refs=[];self.h1=0;self.heading_level=0
+ def __init__(self,file):super().__init__();self.file=file;self.ids=[];self.refs=[];self.h1=0;self.heading_level=0;self.hero_manifest=False;self.script_text=''
  def handle_starttag(self,tag,attrs):
   a=dict(attrs)
+  if tag=='script' and a.get('id')=='hero-scenes':self.hero_manifest=True;self.script_text=''
   if 'id' in a:self.ids.append(a['id'])
   if tag=='h1':self.h1+=1
   if tag in ['h1','h2','h3','h4','h5','h6']:
@@ -27,6 +29,13 @@ class Check(HTMLParser):
    target=ROOT/path.lstrip('/')
    if target.is_dir():target=target/'index.html'
    if not target.exists():errors.append(f'{self.file}: missing {u}')
+ def handle_data(self,data):
+  if self.hero_manifest:self.script_text+=data
+ def handle_endtag(self,tag):
+  if tag=='script' and self.hero_manifest:
+   for scene in json.loads(self.script_text):
+    self.handle_starttag('img',{'src':scene['src'],'srcset':scene['srcset'],'alt':''}.items())
+   self.hero_manifest=False
 for f in ROOT.rglob('*.html'):
  if '.git' in f.parts or '_site' in f.parts:continue
  c=Check(f.relative_to(ROOT));c.feed(f.read_text())

@@ -26,6 +26,35 @@ with sync_playwright() as p:
  q.get_by_role('button',name='Reject optional',exact=True).click()
  assert not errors,errors
  assert q.locator('.service-grid .service-card').count()==8
+ # Header enquiry is a complete empty-state/list workflow, not a dead link.
+ q.locator('.enquiry-nav').click()
+ assert q.locator('#enquiry-dialog').is_visible()
+ assert 'Your next setup starts here' in q.locator('#enquiry-items').inner_text()
+ assert q.locator('[data-clear-enquiry]').is_disabled()
+ assert q.locator('[data-copy-enquiry]').is_disabled()
+ q.keyboard.press('Escape')
+ assert q.locator('.enquiry-nav').evaluate('(el)=>el===document.activeElement')
+ # A transferred list is consumed once: removing it must survive a reload.
+ visit(q,base+'request-quote/?items=laptop:3&category=hardware',wait_until='networkidle')
+ assert 'items=' not in q.url and 'category=hardware' in q.url,(q.url,errors)
+ q.locator('[data-open-enquiry]').first.click()
+ q.locator('[data-remove="laptop"]').click()
+ q.keyboard.press('Escape');q.reload(wait_until='networkidle')
+ assert 'No equipment selected' in q.locator('[data-quote-list]').inner_text()
+ assert q.locator('#service_category').input_value()=='hardware'
+ # Copy has a usable fallback when clipboard permissions are denied.
+ visit(q,base+'solutions/',wait_until='networkidle')
+ q.locator('[data-add="laptop"]').first.click()
+ q.locator('.enquiry-nav').click()
+ q.evaluate("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>Promise.reject(new Error('denied'))}})")
+ q.locator('[data-copy-enquiry]').click()
+ assert q.get_by_role('textbox',name='Equipment list to copy').input_value()=='Business laptops: 1'
+ q.locator('[data-clear-enquiry]').click()
+ assert q.locator('[data-enquiry-count]').first.inner_text()=='0'
+ assert 'Your next setup starts here' in q.locator('#enquiry-items').inner_text()
+ q.keyboard.press('Escape');q.reload(wait_until='networkidle')
+ assert q.locator('[data-enquiry-count]').first.inner_text()=='0'
+ visit(q,base,wait_until='networkidle')
  q.locator('#tab-server').click();assert q.locator('[data-explorer-title]').inner_text()=='Servers & storage'
  assert q.locator('[data-explorer-photo]').get_attribute('src').endswith('/servers-960.webp')
  q.locator('#tab-server').press('ArrowRight');assert q.locator('#tab-network').get_attribute('aria-selected')=='true'

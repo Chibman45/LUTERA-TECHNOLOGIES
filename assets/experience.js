@@ -118,7 +118,14 @@
   addEventListener('pageshow',()=>{busy=false;submit.disabled=false;submit.textContent='Submit quote request'});
  }
  if(location.pathname===base+'thank-you/'){items=[];businessNeed='';persist()}
- persist();renderDrawer();updateCounts();
+ persist();
+ // Consume a transferred list only after it is safely saved. Otherwise an old
+ // query string would restore removed items/quantities on every page reload.
+ if(storageAvailable&&query.has('items')){
+  const cleanURL=new URL(location.href);cleanURL.searchParams.delete('items');
+  try{history.replaceState(history.state,'',cleanURL)}catch{}
+ }
+ renderDrawer();updateCounts();
  // Quote quick actions carry the list even if session storage is blocked.
  $$('a[href]').forEach(a=>{if(a.pathname===base+'request-quote/'&&!a.search)a.addEventListener('click',()=>a.href=quoteURL())});
 })();

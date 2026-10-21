@@ -14,7 +14,7 @@ from experience import enhance, chrome
 ROOT = Path(__file__).resolve().parents[1]
 BASE = os.environ.get('SITE_BASE', '/LUTERA-TECHNOLOGIES/').rstrip('/') + '/'
 ORIGIN = os.environ.get('SITE_ORIGIN', 'https://chibman45.github.io').rstrip('/')
-REV = 'brand4'
+REV = 'hero1'
 
 ICONS = {
  'procurement':'<path d="M9 5H5v16h14V5h-4M9 3h6v5H9Z"/><path d="m8 14 3 3 5-6"/>',
@@ -61,19 +61,30 @@ def cta():
             '<p>Share the project, the requirements and your timeline. We reply within two working days.</p></div>'+
             btn('request-quote','Request a quote')+'</div></div></section>')
 
-def rows():
-    # Decorative rows use the documented pattern geometry, never an altered logo.
-    groups=[]
-    for row in range(2):
-        for col in range(4):
-            cls='row-signal' if (row,col)==(1,2) else ''
-            groups.append(f'<g transform="translate({col*128} {row*154})" class="{cls}"><rect width="24" height="120" rx="12"/><rect x="34" y="80" width="24" height="40" rx="12"/><rect x="68" y="80" width="24" height="40" rx="12"/></g>')
-    return '<svg class="rows-pattern" viewBox="0 0 476 274" fill="currentColor" aria-hidden="true">'+''.join(groups)+'</svg>'
-
-hero=(f'<section class="hero"><div class="wrap hero-grid"><div class="hero-copy"><h1>Hardware, software<br>and intelligent<br><em class="lt-accent">systems.</em></h1>'
+# Photo changes never replace or hide the readable company proposition.
+HERO_SCENES = [
+    ('hero-workplace', 'Equipment and digital workspaces', '50% 48%'),
+    ('hero-support', 'Computer installation and support', '50% 48%'),
+    ('hero-cloud', 'Cloud and connected infrastructure', '50% 50%'),
+]
+hero_scenes = [{'src':BASE+'assets/photos/'+name+'-1280.webp',
+                'srcset':', '.join(BASE+'assets/photos/'+name+'-'+str(w)+'.webp '+str(w)+'w' for w in [768,1280,1920]),
+                'name':name_label,'position':position} for name,name_label,position in HERO_SCENES]
+hero_manifest = json.dumps(hero_scenes,ensure_ascii=False).replace('<','\\u003c')
+first_scene = hero_scenes[0]
+hero=(f'<section class="hero hero--photographic" data-hero aria-labelledby="hero-title">'
+      f'<div class="hero-media" data-hero-media aria-hidden="true"><img class="hero-slide is-active" src="{first_scene["src"]}" srcset="{first_scene["srcset"]}" sizes="100vw" width="1920" height="1200" alt="" fetchpriority="high" decoding="async" style="object-position:{first_scene["position"]}"></div>'
+      '<div class="hero-shade" aria-hidden="true"></div><div class="wrap hero-grid"><div class="hero-copy"><h1 id="hero-title">Hardware, software<br>and intelligent<br><em class="lt-accent">systems.</em></h1>'
       '<p>Built around your organisation. From equipment supply and computer labs to AI, software, data and cloud, we plan, source, build and support the technology your work depends on.</p>'
       '<div class="actions">'+btn('request-quote','Request a quote')+link('services','Explore our services ↗','text-link')+'</div></div>'
-      '<div class="hero-panel">'+rows()+'<div class="hero-panel-copy"><h2>Supply. Build. Connect.</h2><p>One considered approach. <br>From your first brief to ongoing support.</p></div></div></div></section>')
+      '<div class="hero-panel"><div class="hero-panel-copy"><h2>Supply. Build. Connect.</h2><p>One considered approach.<br>From your first brief to ongoing support.</p></div></div></div>'
+      '<div class="wrap hero-footer"><p class="hero-photo-note">Representative technology photography.</p><div class="hero-controls" role="group" aria-label="Hero image controls" hidden>'
+      '<button type="button" class="hero-control" data-hero-previous aria-label="Previous technology image" title="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>'
+      '<span class="hero-counter" data-hero-counter aria-label="Image 1 of 3">1 / 3</span>'
+      '<button type="button" class="hero-control" data-hero-next aria-label="Next technology image" title="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>'
+      '<button type="button" class="hero-control" data-hero-pause aria-label="Pause background motion" title="Pause background motion" aria-pressed="false"><svg data-hero-pause-icon viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg><svg data-hero-play-icon viewBox="0 0 24 24" aria-hidden="true" hidden><path d="m9 5 10 7-10 7Z"/></svg></button>'
+      '</div><span class="sr-only" data-hero-status role="status" aria-live="polite"></span></div>'
+      '<script id="hero-scenes" type="application/json">'+hero_manifest+'</script></section>')
 service_section='<section class="home-services" id="our-services"><div class="wrap"><div class="section-head"><h2>Eight services.<br>One place to start.</h2><p>Choose the expertise your project needs. Every service starts with your organisation, your users and a clear scope.</p></div>'+service_cards(BASE,icon)+'</div></section>'
 home=hero+service_section
 
@@ -132,7 +143,7 @@ pages=add_digital_pages(pages,BASE,pagehero,icon)
 
 def copy_style(markup):
     # Change visible copy only. Existing form IDs and transport field names stay stable.
-    parts=re.split(r'(<[^>]+>)',markup)
+    parts=re.split(r'(<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>|<[^>]+>)',markup,flags=re.S|re.I)
     replacements=[(r'\bLUTERA TECHNOLOGIES(?: LTD)?\b','Lutera Technology Ltd'),(r'\bLUTERA Technologies\b','Lutera Technology Ltd'),(r'\bLUTERA\b','Lutera'),(r'\borganizations\b','organisations'),(r'\borganization\b','organisation'),(r'\bOrganization\b','Organisation'),(r'\bprioritization\b','prioritisation'),(r'\borganized\b','organised')]
     for i in range(0,len(parts),2):
         for pattern,replacement in replacements:parts[i]=re.sub(pattern,replacement,parts[i])

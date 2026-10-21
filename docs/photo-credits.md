@@ -26,3 +26,13 @@ Cloud and integration use the existing server-rack image. Network, printer, desk
 The October 2026 rebrand replaces the conceptual AI art with workflow photography and the support circuit-board image with actual computer maintenance. Procurement uses the laptop specification photograph; the warehouse photograph is retained as an unused source asset. All final page images are served locally.
 
 Responsive 480px and 960px WebP versions are generated from the local source files by `scripts/prepare_images.py`. The HTML includes `srcset` and `sizes` so smaller screens can request a smaller image. Original JPEG source files are retained.
+
+## Photographic hero update
+
+The homepage rotates three representative technology scenes, with a consistent dark overlay and readable white text. These photographs do not depict Lutera staff, premises or completed work.
+
+- `hero-workplace-{768,1280,1920}.webp`: https://images.unsplash.com/photo-1498050108023-c5249f4df085 — software development and a computing workspace.
+- `hero-support-{768,1280,1920}.webp`: https://images.unsplash.com/photo-1581092918056-0c4c3acd3789 — computer hardware installation and support.
+- `hero-cloud-{768,1280,1920}.webp`: https://images.unsplash.com/photo-1558494949-ef010cbdcc31 — connected server infrastructure.
+
+Hero images use 1920 × 1200 source crops with local responsive WebP derivatives. Only the first image is requested initially; subsequent images load before their first transition. Reduced-motion and data-saving visits do not autoplay or preload the other backgrounds. With JavaScript disabled, the first image and all hero copy/actions remain available.
