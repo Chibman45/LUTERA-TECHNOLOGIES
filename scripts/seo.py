@@ -2,7 +2,7 @@
 import json
 
 PAGE_META={
- '':('IT & AI Solutions in Abuja | LUTERA Technologies','Abuja-based IT and AI solutions: AI agents, automation, software development, data analytics, cloud integration, hardware supply and technical support.'),
+ '':('Hardware, Software & AI | Lutera Technology Ltd','Abuja-based IT and AI solutions: AI agents, automation, software development, data analytics, cloud integration, hardware supply and technical support.'),
  'about':('About LUTERA Technologies | IT & AI Company in Abuja','Meet LUTERA Technologies in Garki, Abuja. Explore our approach to AI, software, IT consultancy, hardware procurement and technology support.'),
  'services':('IT & AI Services in Abuja | LUTERA Technologies','Explore AI automation, software development, analytics, cloud integration, IT consulting, hardware procurement and maintenance services from LUTERA.'),
  'solutions':('AI, Software & Hardware Solutions | LUTERA Technologies','Find AI, software, cloud and workplace equipment solutions. Explore consulting, hardware supply and technical support for your business in Abuja.'),
@@ -11,7 +11,7 @@ PAGE_META={
  'services/it-procurement':('IT Procurement & Equipment Supply in Abuja | LUTERA','Discuss computer hardware sourcing, importation, exportation, wholesale and retail supply. Request a quotation based on your equipment requirements.'),
  'services/hardware':('Computer Hardware & Equipment in Abuja | LUTERA','Explore business laptops, desktops, servers, networking equipment, printers and accessories. Ask LUTERA about specifications, quantities and supply.'),
  'services/consulting':('IT & Technology Consulting in Abuja | LUTERA','Discuss IT priorities, software and AI planning, cloud integration and equipment specifications with LUTERA Technologies in Abuja.'),
- 'services/technical-support':('Computer Installation & IT Support in Abuja | LUTERA','Enquire about computer installation, maintenance, troubleshooting and technical support. Discuss your equipment, location and required service scope.'),
+ 'services/technical-support':('Computer Labs, Installation & IT Support | Lutera','Plan computer labs, equipment installation, commissioning, maintenance and technical support with Lutera in Abuja.'),
  'services/ai-automation':('AI Agents & Business Automation in Abuja | LUTERA','Explore AI agent development and business process automation with LUTERA. Define workflows, system access, review steps and implementation requirements.'),
  'services/software-development':('Software Development in Abuja | LUTERA Technologies','Discuss custom software design, development and implementation. Plan business applications, workflows and integrations with LUTERA Technologies.'),
  'services/data-analytics':('Data Analytics & Business Reporting in Abuja | LUTERA','Plan data analytics, business reporting and dashboards with LUTERA. Start with the decisions you need to support, your data sources and reporting needs.'),
@@ -24,26 +24,29 @@ PAGE_META={
 }
 SERVICE_NAMES={
  'it-procurement':'IT procurement and equipment supply','hardware':'Computer hardware and equipment',
- 'consulting':'Technology and IT consulting','technical-support':'Computer installation, maintenance and technical support',
+ 'consulting':'Technology and IT consulting','technical-support':'Computer labs, installation, maintenance and technical support',
  'ai-automation':'AI agent development and business process automation','software-development':'Software design, development and implementation',
  'data-analytics':'Data analytics and business reporting','cloud-integration':'Cloud-based solutions and systems integration',
 }
 
 def metadata(route):
-    return PAGE_META[route]
+    title,description=PAGE_META[route]
+    for old,new in [('LUTERA Technologies','Lutera Technology Ltd'),('LUTERA technology','Lutera technology'),('LUTERA','Lutera')]:
+        title=title.replace(old,new);description=description.replace(old,new)
+    return title,description
 
 def schema(route,title,description,organization,origin,base):
     home=origin+base
     canonical=home+('404.html' if route=='404' else route+'/' if route else '')
-    organization=dict(organization,**{'@id':home+'#organization','logo':{'@type':'ImageObject','url':home+'assets/lutera-logo.png','width':1536,'height':1024}})
+    organization=dict(organization,**{'@id':home+'#organization','logo':{'@type':'ImageObject','url':home+'assets/logo/lutera-social-logo.png','width':600,'height':172}})
     organization.pop('@context',None)
-    organization['hasOfferCatalog']={'@type':'OfferCatalog','name':'LUTERA technology services','itemListElement':[
+    organization['hasOfferCatalog']={'@type':'OfferCatalog','name':'Lutera technology services','itemListElement':[
         {'@type':'Offer','itemOffered':{'@type':'Service','name':name,'url':home+'services/'+slug+'/'}}
         for slug,name in SERVICE_NAMES.items()]}
     page_type={'about':'AboutPage','contact':'ContactPage','services':'CollectionPage','solutions':'CollectionPage'}.get(route,'WebPage')
     webpage={'@type':page_type,'@id':canonical+'#webpage','url':canonical,'name':title,'description':description,'inLanguage':'en-NG',
              'isPartOf':{'@id':home+'#website'},'about':{'@id':home+'#organization'}}
-    graph=[organization,{'@type':'WebSite','@id':home+'#website','url':home,'name':'LUTERA Technologies','inLanguage':'en-NG','publisher':{'@id':home+'#organization'}},webpage]
+    graph=[organization,{'@type':'WebSite','@id':home+'#website','url':home,'name':'Lutera Technology Ltd','inLanguage':'en-NG','publisher':{'@id':home+'#organization'}},webpage]
     if route and route not in ['404','thank-you']:
         crumbs=[('Home',home)]
         if route.startswith('services/'):crumbs.append(('Services',home+'services/'))

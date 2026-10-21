@@ -25,12 +25,9 @@ with sync_playwright() as p:
  visit(q,base,wait_until='networkidle')
  q.get_by_role('button',name='Reject optional',exact=True).click()
  assert not errors,errors
- assert q.locator('.services-bento .bento-card').count()==4
- q.get_by_role('button',name='Explore business laptops',exact=True).click()
- assert q.locator('#hotspot-detail').is_visible()
- assert q.locator('[data-hotspot-title]').inner_text()=='Business laptops'
- q.keyboard.press('Escape');assert not q.locator('#hotspot-detail').is_visible()
+ assert q.locator('.service-grid .service-card').count()==8
  q.locator('#tab-server').click();assert q.locator('[data-explorer-title]').inner_text()=='Servers & storage'
+ assert q.locator('[data-explorer-photo]').get_attribute('src').endswith('/servers-960.webp')
  q.locator('#tab-server').press('ArrowRight');assert q.locator('#tab-network').get_attribute('aria-selected')=='true'
  q.get_by_role('tab',name='04 Agree next steps',exact=False).click()
  assert 'Agree the scope' in q.locator('[data-stage-title]').inner_text()

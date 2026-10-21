@@ -24,7 +24,6 @@ jobs:
       - run: node --check assets/app.js
       - run: node --check assets/experience.js
       - run: node --check assets/motion.js
-      - run: node --check assets/scene.js
   browser:
     runs-on: ubuntu-latest
     steps:
@@ -43,7 +42,7 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Verify procurement and responsive flows
         run: python tests/browser_experience.py
-      - name: Verify tablet 3D and touch interaction
-        run: python tests/browser_tablet_3d.py
+      - name: Verify brand, navigation and service coverage
+        run: python tests/browser_brand.py
       - name: Verify first-visit cookie choices and privacy controls
         run: python tests/browser_consent.py

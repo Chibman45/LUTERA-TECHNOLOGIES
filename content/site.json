@@ -1,0 +1,108 @@
+{
+  "company": {
+    "name": "Lutera Technology Ltd",
+    "legal_name": "Lutera Technology Ltd",
+    "registration_completed": true,
+    "registration_number": "",
+    "email": "chimaster010@gmail.com",
+    "phone": "+2349026276130",
+    "display_phone": "+234 902 6276 130",
+    "whatsapp": "https://wa.me/2349026276130",
+    "street_address": "No. 7, Mahatma Gandhi Street, Area 11, Garki",
+    "city": "Abuja",
+    "state": "FCT",
+    "country": "NG",
+    "lga": "AMAC (Abuja Municipal Area Council)",
+    "house_number": "No. 7",
+    "nature_of_business": "Information Technology and Artificial Intelligence (AI) Solutions; Technology Consultancy and IT Consulting Services; AI Agent Development and Business Process Automation; Software Design, Development and Implementation; Data Analytics; Systems Integration; Cloud-Based Solutions; Procurement, Importation, Exportation, Wholesale and Retail Supply of Computer Hardware, Accessories and Peripherals; Computer Installation, Maintenance and Technical Support; and Related Technology Services.",
+    "brand_name": "Lutera"
+  },
+  "services": [
+    {
+      "key": "procurement",
+      "slug": "it-procurement",
+      "title": "IT procurement & sourcing",
+      "icon": "procurement",
+      "image": "laptop",
+      "alt": "Business laptop illustrating an equipment specification",
+      "description": "Equipment sourced against your requirements, from specification and pre-shipment inspection to agreed delivery."
+    },
+    {
+      "key": "hardware",
+      "slug": "hardware",
+      "title": "Computer hardware & equipment",
+      "icon": "hardware",
+      "image": "desktop",
+      "alt": "Desktop computer, keyboard and mouse",
+      "description": "Business laptops, desktops, servers, networking equipment and the accessories that complete your setup."
+    },
+    {
+      "key": "consulting",
+      "slug": "consulting",
+      "title": "Technology & IT consulting",
+      "icon": "consulting",
+      "image": "consulting",
+      "alt": "A team discussing project requirements with laptops around a shared table",
+      "description": "Clear advice on technology priorities, specifications and implementation, shaped around your organisation."
+    },
+    {
+      "key": "support",
+      "slug": "technical-support",
+      "title": "Installation & technical support",
+      "icon": "support",
+      "image": "support",
+      "alt": "Technician installing a memory module in computer equipment",
+      "description": "Computer labs, installation, commissioning and maintenance, with a named support contact after handover."
+    },
+    {
+      "key": "ai",
+      "slug": "ai-automation",
+      "title": "AI agents & automation",
+      "icon": "automation",
+      "image": "ai",
+      "alt": "A team mapping the stages of a business workflow",
+      "description": "AI agents and business process automation for workflows that are currently handled by hand."
+    },
+    {
+      "key": "software",
+      "slug": "software-development",
+      "title": "Software development",
+      "icon": "software",
+      "image": "software",
+      "alt": "Software source code displayed on a development computer",
+      "description": "Business software designed, developed and implemented to an agreed scope, with your users in mind."
+    },
+    {
+      "key": "data",
+      "slug": "data-analytics",
+      "title": "Data analytics",
+      "icon": "data",
+      "image": "data",
+      "alt": "Analytics dashboard displaying business charts and metrics",
+      "description": "Useful reporting and analysis built around your business questions, data sources and decisions."
+    },
+    {
+      "key": "cloud",
+      "slug": "cloud-integration",
+      "title": "Cloud & systems integration",
+      "icon": "cloud",
+      "image": "servers",
+      "alt": "Connected racks of server equipment",
+      "description": "Cloud-based systems and practical integrations that connect the applications your organisation uses."
+    }
+  ],
+  "commitments": [
+    {
+      "title": "A clear specification",
+      "description": "We source against an agreed specification and carry out pre-shipment inspections."
+    },
+    {
+      "title": "Support after handover",
+      "description": "Locally held spare parts and a named support contact for the equipment we supply."
+    },
+    {
+      "title": "Written warranty terms",
+      "description": "Parts warranty starts from site acceptance. Duration and coverage are agreed in writing."
+    }
+  ]
+}
