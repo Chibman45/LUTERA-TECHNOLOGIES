@@ -14,7 +14,7 @@ from experience import enhance, chrome
 ROOT = Path(__file__).resolve().parents[1]
 BASE = os.environ.get('SITE_BASE', '/LUTERA-TECHNOLOGIES/').rstrip('/') + '/'
 ORIGIN = os.environ.get('SITE_ORIGIN', 'https://chibman45.github.io').rstrip('/')
-REV = 'hero1'
+REV = 'cards1'
 
 ICONS = {
  'procurement':'<path d="M9 5H5v16h14V5h-4M9 3h6v5H9Z"/><path d="m8 14 3 3 5-6"/>',
