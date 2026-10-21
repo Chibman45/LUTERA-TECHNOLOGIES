@@ -14,7 +14,7 @@ from experience import enhance, chrome
 ROOT = Path(__file__).resolve().parents[1]
 BASE = os.environ.get('SITE_BASE', '/LUTERA-TECHNOLOGIES/').rstrip('/') + '/'
 ORIGIN = os.environ.get('SITE_ORIGIN', 'https://chibman45.github.io').rstrip('/')
-REV = 'brand3'
+REV = 'brand4'
 
 ICONS = {
  'procurement':'<path d="M9 5H5v16h14V5h-4M9 3h6v5H9Z"/><path d="m8 14 3 3 5-6"/>',
@@ -82,7 +82,7 @@ about+='<section><div class="wrap split"><div><h2>One team.<br>A broader perspec
 about+='<section class="pale"><div class="wrap two-cards"><article class="card"><h2>Make technology useful.</h2><p>Our mission is to simplify how organisations plan, adopt, build, source and support technology, with practical thinking and clear communication.</p></article><article class="card"><h2>Keep the work moving.</h2><p>We bring the equipment, software and support conversation together, so each decision can serve the organisation beyond the initial purchase.</p></article></div></section>'
 about+=company_details()+commitments(BASE)+cta()
 servicepage=pagehero('The expertise your<br>next project needs.','Equipment and infrastructure. Software and intelligent systems. Advice and support. Explore all eight services and start with the outcome you need.','','Services')
-servicepage+='<section><div class="wrap">'+service_cards(BASE,icon)+'</div></section>'+commitments(BASE)+cta()
+servicepage+='<section><div class="wrap">'+service_cards(BASE,icon,'h2')+'</div></section>'+commitments(BASE)+cta()
 
 # The experience module supplies Solutions and the native, progressively enhanced quote form.
 pages={'':('Home',home),'about':('About',about),'services':('Services',servicepage),'solutions':('Solutions',''),'request-quote':('Request a quote','')}

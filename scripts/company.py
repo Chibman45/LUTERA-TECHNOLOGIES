@@ -30,9 +30,9 @@ def company_details():
             ''.join('<div><dt>'+label+'</dt><dd>'+escape(value)+'</dd></div>' for label,value in facts) +
             '</dl>'+directions_link()+'</div><div class="company-scope"><h3>What we do</h3><p>'+escape(NATURE_OF_BUSINESS)+'</p></div></div></section>')
 
-def service_cards(base, icon):
+def service_cards(base, icon, heading="h3"):
     return '<div class="service-grid" data-service-grid>'+''.join(
-        f'<article class="service-card" data-service="{s["key"]}"><img src="{base}assets/photos/{s["image"]}.jpg" width="960" height="640" loading="lazy" decoding="async" alt="{escape(s["alt"],quote=True)}"><div class="service-card-copy">{icon(s["icon"])}<h3>{escape(s["title"])}</h3><p>{escape(s["description"])}</p><a class="text-link" href="{base}services/{s["slug"]}/">Explore {escape(s["title"])} ↗</a></div></article>'
+        f'<article class="service-card" data-service="{s["key"]}"><img src="{base}assets/photos/{s["image"]}.jpg" width="960" height="640" loading="lazy" decoding="async" alt="{escape(s["alt"],quote=True)}"><div class="service-card-copy">{icon(s["icon"])}<{heading}>{escape(s["title"])}</{heading}><p>{escape(s["description"])}</p><a class="text-link" href="{base}services/{s["slug"]}/">Explore {escape(s["title"])} ↗</a></div></article>'
         for s in SERVICES)+'</div>'
 
 def commitments(base):

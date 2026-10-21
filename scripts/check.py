@@ -4,11 +4,15 @@ from urllib.parse import urlsplit,unquote
 ROOT=Path(__file__).resolve().parents[1]
 errors=[]
 class Check(HTMLParser):
- def __init__(self,file):super().__init__();self.file=file;self.ids=[];self.refs=[];self.h1=0
+ def __init__(self,file):super().__init__();self.file=file;self.ids=[];self.refs=[];self.h1=0;self.heading_level=0
  def handle_starttag(self,tag,attrs):
   a=dict(attrs)
   if 'id' in a:self.ids.append(a['id'])
   if tag=='h1':self.h1+=1
+  if tag in ['h1','h2','h3','h4','h5','h6']:
+   level=int(tag[1])
+   if level>self.heading_level+1:errors.append(f'{self.file}: heading skips from h{self.heading_level} to {tag}')
+   self.heading_level=level
   if tag=='img' and 'alt' not in a:errors.append(f'{self.file}: image missing alt')
   for key in ('href','src','srcset'):
    u=a.get(key,'')

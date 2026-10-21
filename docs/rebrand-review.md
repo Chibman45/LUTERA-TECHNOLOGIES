@@ -14,7 +14,7 @@
 
 ## Verification
 
-Static checks validate paths, responsive image variants, headings, IDs, alt text, metadata, sitemap and IndexNow payload. JavaScript syntax checks cover all four shipped scripts.
+Static checks validate paths, responsive image variants, headings, IDs, alt text, metadata, sitemap and IndexNow payload. JavaScript syntax checks cover all four shipped scripts. The live Lighthouse review identified and corrected heading-level skips on Services and the quote form; the static check now guards against those skips. The sticky header also avoids a synchronous layout read during startup.
 
 Browser regression suites cover all 19 routes and image loads; eight service-to-quote links; equal service widths and 320–1440px containment; tablet/mobile navigation; keyboard use; reduced motion; absence of 3D downloads; enquiry persistence, quantity/date validation, comparison and wizard navigation; no-JavaScript submission/navigation; blocked storage; both native form payloads; and fresh-visit consent behaviour. Test submissions are intercepted, so automated checks send no real enquiries and do not verify inbox delivery.
 

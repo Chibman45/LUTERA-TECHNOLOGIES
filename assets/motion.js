@@ -5,5 +5,5 @@
  if(!header)return;
  const update=()=>header.classList.toggle('is-scrolled',window.scrollY>16);
  window.addEventListener('scroll',update,{passive:true});
- update();
+ // Scroll events update the shadow without forcing startup layout.
 })();
