@@ -19,19 +19,34 @@ with sync_playwright() as p:
  q.on('pageerror',lambda e:errors.append(str(e)))
  q.goto(base,wait_until='networkidle');q.get_by_role('button',name='Reject optional').click()
  hero=q.locator('[data-hero]');q.wait_for_function('document.querySelector("[data-hero]").dataset.motion==="running"')
- assert q.locator('.hero-media img').count()==1
+ # A slow runner may finish loading after an automatic cycle has occurred.
+ assert 1<=q.locator('.hero-media img').count()<=3
+ initial_counter=q.locator('[data-hero-counter]').inner_text()
  first=q.locator('.hero-slide.is-active');a=first.evaluate('(e)=>getComputedStyle(e).transform');q.wait_for_timeout(400);assert a!=first.evaluate('(e)=>getComputedStyle(e).transform')
  # A real automatic cycle loads and decodes the next image before crossfading.
- q.wait_for_function('document.querySelector("[data-hero-counter]").textContent==="2 / 3"',timeout=15000)
+ q.wait_for_function('(previous)=>document.querySelector("[data-hero-counter]").textContent!==previous',arg=initial_counter,timeout=15000)
  assert q.locator('.hero-slide.is-active').evaluate('(e)=>e.complete&&e.naturalWidth>0')
  q.locator('[data-hero-pause]').click();assert q.locator('[data-hero-pause]').get_attribute('aria-pressed')=='true'
  assert q.locator('[data-hero-play-icon]').is_visible() and not q.locator('[data-hero-pause-icon]').is_visible()
- frozen=q.locator('.hero-slide.is-active').evaluate('(e)=>getComputedStyle(e).transform')
+ # Pausing a newly active image is asynchronous on the compositor. Wait for
+ # the animation's pending operation, then check its actual timeline rather
+ # than sampling a possibly stale transform from the previous paint.
+ active=q.locator('.hero-slide.is-active')
+ active.evaluate('async (e)=>{await Promise.all(e.getAnimations().map(a=>a.ready))}')
+ pan_state='(e)=>{const pan=e.getAnimations().find(a=>a.animationName==="hero-photo-pan");return {state:pan.playState,time:pan.currentTime}}'
+ frozen=active.evaluate(pan_state)
+ paused_counter=q.locator('[data-hero-counter]').inner_text()
+ assert frozen['state']=='paused',frozen
  q.wait_for_timeout(8500)
- assert q.locator('[data-hero-counter]').inner_text()=='2 / 3'
- assert frozen==q.locator('.hero-slide.is-active').evaluate('(e)=>getComputedStyle(e).transform')
+ assert q.locator('[data-hero-counter]').inner_text()==paused_counter
+ assert frozen==active.evaluate(pan_state),(frozen,active.evaluate(pan_state))
  # Manual navigation remains available while paused, with no hidden text.
- q.locator('[data-hero-next]').click();q.wait_for_function('document.querySelector("[data-hero-counter]").textContent==="3 / 3"')
+ for _ in range(3):
+  current=q.locator('[data-hero-counter]').inner_text()
+  q.locator('[data-hero-next]').click()
+  q.wait_for_function('(previous)=>document.querySelector("[data-hero-counter]").textContent!==previous',arg=current)
+  if q.locator('[data-hero-counter]').inner_text()=='3 / 3':break
+ assert q.locator('[data-hero-counter]').inner_text()=='3 / 3'
  assert 'Cloud and connected infrastructure' in q.locator('[data-hero-status]').inner_text()
  q.locator('[data-hero-next]').click();q.wait_for_function('document.querySelector("[data-hero-counter]").textContent==="1 / 3"')
  q.locator('[data-hero-previous]').click();q.wait_for_function('document.querySelector("[data-hero-counter]").textContent==="3 / 3"')
