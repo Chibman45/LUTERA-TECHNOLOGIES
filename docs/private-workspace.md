@@ -16,16 +16,15 @@ Both Vercel and Supabase connections are available. The baseline and record-guar
 migrations are applied, migration versions are reconciled, and the full access
 suite passes on the actual Supabase project with all fixtures rolled back.
 The private **lutera-workspace** Vercel project is deployed from this repository,
-with Root Directory `apps/workspace`, at `https://lutera-workspace.vercel.app`.
+with Root Directory `apps/workspace`, at `https://workspace.luteratech.com`.
 The generated entry path is held in Production environment settings, not in Git.
 The first production deployment (`dpl_3QpqfB8Lf8J21r5nuxzqbArdAYBm`) is READY.
-Default Vercel deployment protection is retained in addition to application
-authentication. The public project remains **lutera_website**, serving
+Default Vercel deployment protection remains on `.vercel.app` addresses. The
+company subdomain uses application authentication, MFA and database policies. The public project remains **lutera_website**, serving
 `https://luteratech.com`; its published snapshot build and all 32 live checks pass.
 
 The owner's first verified Auth login/MFA setup and the public-site deploy hook
-are still required. At the latest check the approved owner Auth user did not yet
-exist. No authenticated production owner session or workspace-triggered public
+are still required. The approved owner Auth user now exists with a confirmed email. No authenticated production owner session or workspace-triggered public
 publication is claimed as tested.
 
 ## Implemented features
@@ -92,7 +91,7 @@ this public source repository.
 ## Deployment configuration and account setup
 
 Steps 1–2 describe the configuration already provisioned. The exact Production
-origin is `https://lutera-workspace.vercel.app`. The subsequent READY deployment
+origin is now `https://workspace.luteratech.com`. The subsequent READY deployment
 `dpl_7ewWufSfptQySC1tWR3bRmdQEhEJ` applies the explicit `WORKSPACE_ORIGIN`;
 the initial deployment also passed checks using the tested
 `VERCEL_PROJECT_PRODUCTION_URL` fallback. `PUBLIC_SITE_DEPLOY_HOOK` is pending an
@@ -126,8 +125,9 @@ do not receive the production configuration.
    **create** the owner user with the approved email and an owner-chosen strong
    password, completing the provider's email confirmation process. The app
    requires a confirmed email. Do not send the password to ChatGPT or put it in
-   repository/Vercel variables. The current app uses password login; dashboard
-   invitation/recovery email callback flows are not implemented.
+   repository/Vercel variables. Branded invitation/recovery callbacks are now
+   implemented at `/auth/confirm`; hosted Auth URL, SMTP and template settings
+   still need to be applied. See [the email setup guide](../apps/workspace/email/README.md).
 5. Visit the private project's generated entry path, sign in and enroll a TOTP
    authenticator. Store recovery arrangements with the company owner. A second
    owner can be approved for operational continuity. Do not use real customer
@@ -164,12 +164,13 @@ FormSubmit before relying on delivery to the new destination.
 
 ## Access and recovery operations
 
-The owner approves an email and role in Access. Create the matching confirmed
-Auth user through the Supabase dashboard, using a password shared through a
-company-controlled secure channel. Approval alone sends no email and creates
-no password. Password recovery and lost-factor recovery currently require the
-project owner to use Supabase's administrative account controls; they do not
-bypass MFA through a public app endpoint. Revoke sessions during recovery.
+The owner approves an email and role in Access, then creates or invites the
+matching Auth user in the Supabase dashboard. After the branded email settings
+are applied, invitees choose their own password through `/auth/confirm`. Recovery
+links restore an email-verified session, followed by the existing authenticator
+and the My account password form. Approval alone sends no email and creates no
+password. Lost-factor recovery still requires the project owner's administrative
+controls. Email recovery never bypasses MFA. Revoke sessions during recovery.
 
 An owner cannot change their own access rule; another owner must do so. Disable
 a departing colleague in Access. Their next API request is denied immediately;
@@ -258,9 +259,34 @@ Verified locally:
   database jobs for `2d5b85ee99210bbd178d2642dc15c3891cce7c63`.
 
 The actual Supabase access suite has passed, fixtures have rolled back and the
-security advisor still reports no findings. The separate Vercel app is deployed.
+latest security advisor reports a provider warning for disabled leaked-password
+protection; that owner/provider setting has not been changed. The separate
+Vercel app is deployed.
 Before operational use: complete provider Auth settings and verified owner/MFA
 setup, connect its deploy hook, and exercise a real owner login/save/export/
 publish/sign-out cycle. Confirm an unauthorised account and a pre-MFA session
 cannot read records. Choose backup retention and complete a recovery drill.
 No actual payment or customer enquiry should be submitted during checks.
+
+## Official-domain account emails — 22 October update
+
+`workspace.luteratech.com` is attached to the private Vercel project with verified
+DNS. Production `WORKSPACE_ORIGIN` has been updated; the new build applies it.
+The `mail.luteratech.com` sending domain is verified in Resend, with all four
+provider DNS records set in Cloudflare and click/open tracking disabled. The
+public website and existing mailbox routing are preserved.
+
+All 13 Supabase account email templates use Lutera Technology Ltd, the supplied
+logo rendered as a PNG for email compatibility, the official company website
+and monitored support contact. They include subjects, authentication actions
+and security notifications. The callback waits for an explicit same-origin POST
+before consuming a token; approval, confirmed email and MFA still gate access.
+Invitation passwords are chosen privately. Recovery routes users through their
+existing MFA to My account; a successful password change revokes all sessions.
+
+The hosted Supabase Site URL/allowlist, SMTP sender and templates **have not yet
+been applied**: the connected tool exposes no Auth configuration operation and
+no Management API token is provisioned. The complete, non-secret payload,
+individual templates and a private owner-run configuration utility are in
+[the email setup directory](../apps/workspace/email/README.md). A fresh owner
+invitation/recovery inbox check remains required after those settings are saved.

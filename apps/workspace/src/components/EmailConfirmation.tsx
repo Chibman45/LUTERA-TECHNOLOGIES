@@ -1,0 +1,181 @@
+"use client";
+import { useEffect, useState } from "react";
+import type { emailActionTypes } from "@/lib/auth-email";
+type Action = (typeof emailActionTypes)[number];
+export default function EmailConfirmation({
+  token,
+  type,
+}: {
+  token: string;
+  type: Action | null;
+}) {
+  const [busy, setBusy] = useState(false),
+    [message, setMessage] = useState("");
+  const [completed, setCompleted] = useState(false);
+  useEffect(() => {
+    // Remove the token from the visible address/history after hydration. It is
+    // held only in this page's memory until the user explicitly continues.
+    window.history.replaceState(null, "", "/auth/confirm");
+  }, []);
+  const invite = type === "invite",
+    recovery = type === "recovery";
+  const valid = Boolean(token && type);
+  return (
+    <main className="auth-shell">
+      <section className="auth-brand">
+        <a href="https://luteratech.com">
+          <img
+            src="/brand/lutera-horizontal-dark.svg"
+            alt="Lutera Technology Ltd"
+            width="170"
+            height="49"
+          />
+        </a>
+        <div>
+          <p className="eyebrow">Lutera Technology Ltd</p>
+          <h1>
+            Your work.
+            <br />
+            Connected.
+          </h1>
+          <p>Secure access for the people behind Lutera.</p>
+        </div>
+        <span>Supply. Build. Connect.</span>
+      </section>
+      <section className="auth-form">
+        <p className="eyebrow">Private business workspace</p>
+        <h2>
+          {!valid
+            ? "Check your email link."
+            : invite
+              ? "Welcome to Lutera."
+              : recovery
+                ? "Recover your account."
+                : "Confirm your email."}
+        </h2>
+        {!valid ? (
+          <p>
+            Open the full link from your latest Lutera account email. If it has
+            expired, contact the company owner for a new one.
+          </p>
+        ) : completed ? (
+          <p role="status">{message}</p>
+        ) : (
+          <>
+            <p>
+              {invite
+                ? "Choose a unique password to accept your invitation. You will then set up your authenticator."
+                : recovery
+                  ? "Continue to verify your existing authenticator, then choose a new password in My account. Email recovery does not remove your authenticator."
+                  : "Continue to confirm this account action. Only approved accounts can open the workspace."}
+            </p>
+            <form
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const form = event.currentTarget,
+                  values = new FormData(form);
+                if (
+                  invite &&
+                  values.get("password") !== values.get("confirmation")
+                ) {
+                  setMessage("Passwords must match.");
+                  return;
+                }
+                setBusy(true);
+                setMessage("");
+                try {
+                  const response = await fetch("/api/auth/email-confirm", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      token_hash: token,
+                      type,
+                      ...(invite
+                        ? {
+                            password: values.get("password"),
+                            confirmation: values.get("confirmation"),
+                          }
+                        : {}),
+                    }),
+                  });
+                  const data = await response.json();
+                  if (!response.ok)
+                    throw new Error(
+                      data.error || "This link could not be confirmed.",
+                    );
+                  form.reset();
+                  if (data.next === "email_pending") {
+                    setCompleted(true);
+                    setMessage(
+                      "This email is confirmed. Complete the confirmation in your other mailbox to finish the email change.",
+                    );
+                    return;
+                  }
+                  if (
+                    typeof data.redirect !== "string" ||
+                    !/^\/[A-Za-z0-9_-]{32,128}(\?account=password)?$/.test(
+                      data.redirect,
+                    )
+                  )
+                    throw new Error(
+                      "Return address is unavailable. Contact the company owner.",
+                    );
+                  window.location.replace(data.redirect);
+                } catch (error) {
+                  setMessage((error as Error).message);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {invite && (
+                <>
+                  <label className="field">
+                    <span>New password</span>
+                    <input
+                      name="password"
+                      type="password"
+                      minLength={12}
+                      maxLength={128}
+                      autoComplete="new-password"
+                      required
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Confirm password</span>
+                    <input
+                      name="confirmation"
+                      type="password"
+                      minLength={12}
+                      maxLength={128}
+                      autoComplete="new-password"
+                      required
+                    />
+                  </label>
+                </>
+              )}
+              {message && (
+                <p className="error" role="alert">
+                  {message}
+                </p>
+              )}
+              <button disabled={busy}>
+                {busy
+                  ? "Confirming…"
+                  : invite
+                    ? "Accept invitation"
+                    : recovery
+                      ? "Continue recovery"
+                      : "Confirm and continue"}
+              </button>
+            </form>
+          </>
+        )}
+        <p className="muted">
+          Need help? <a href="mailto:chimaster010@gmail.com">Contact Lutera</a>{" "}
+          or visit <a href="https://luteratech.com">luteratech.com</a>.
+        </p>
+      </section>
+    </main>
+  );
+}

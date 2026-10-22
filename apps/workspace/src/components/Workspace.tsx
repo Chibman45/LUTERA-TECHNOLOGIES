@@ -114,7 +114,12 @@ export default function Workspace() {
         next.verified &&
         (!previous?.verified || previous.role !== next.role)
       ) {
-        setTab("overview");
+        setTab(
+          new URLSearchParams(window.location.search).get("account") ===
+            "password"
+            ? "account"
+            : "overview",
+        );
         await refresh();
       }
       if (!next.verified) setData(null);
@@ -734,8 +739,10 @@ function Members({
         {message && <Notice>{message}</Notice>}
         <Notice>
           Approval does not send an email or create a password. Create the
-          colleague’s account in the Supabase Authentication dashboard, using
-          the approved email. Never share passwords through this workspace.
+          colleague’s account or send an invitation in the Supabase
+          Authentication dashboard using the approved email. Branded email
+          invitations let each person choose their own password. Never share
+          passwords through this workspace.
         </Notice>
       </form>
       <section className="panel">

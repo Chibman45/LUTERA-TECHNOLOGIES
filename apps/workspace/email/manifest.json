@@ -1,0 +1,67 @@
+[
+  {
+    "template": "confirmation",
+    "subject": "Lutera Technology Ltd | Confirm your email",
+    "file": "templates/confirmation.html"
+  },
+  {
+    "template": "invite",
+    "subject": "Lutera Technology Ltd | Welcome to Lutera",
+    "file": "templates/invite.html"
+  },
+  {
+    "template": "recovery",
+    "subject": "Lutera Technology Ltd | Recover your Lutera account",
+    "file": "templates/recovery.html"
+  },
+  {
+    "template": "magic_link",
+    "subject": "Lutera Technology Ltd | Your secure sign-in link",
+    "file": "templates/magic_link.html"
+  },
+  {
+    "template": "email_change",
+    "subject": "Lutera Technology Ltd | Confirm your email change",
+    "file": "templates/email_change.html"
+  },
+  {
+    "template": "reauthentication",
+    "subject": "Lutera Technology Ltd | Your verification code",
+    "file": "templates/reauthentication.html"
+  },
+  {
+    "template": "password_changed_notification",
+    "subject": "Lutera Technology Ltd | Your password was changed",
+    "file": "templates/password_changed_notification.html"
+  },
+  {
+    "template": "email_changed_notification",
+    "subject": "Lutera Technology Ltd | Your email address was changed",
+    "file": "templates/email_changed_notification.html"
+  },
+  {
+    "template": "phone_changed_notification",
+    "subject": "Lutera Technology Ltd | Your phone number was changed",
+    "file": "templates/phone_changed_notification.html"
+  },
+  {
+    "template": "identity_linked_notification",
+    "subject": "Lutera Technology Ltd | A sign-in method was added",
+    "file": "templates/identity_linked_notification.html"
+  },
+  {
+    "template": "identity_unlinked_notification",
+    "subject": "Lutera Technology Ltd | A sign-in method was removed",
+    "file": "templates/identity_unlinked_notification.html"
+  },
+  {
+    "template": "mfa_factor_enrolled_notification",
+    "subject": "Lutera Technology Ltd | A verification method was added",
+    "file": "templates/mfa_factor_enrolled_notification.html"
+  },
+  {
+    "template": "mfa_factor_unenrolled_notification",
+    "subject": "Lutera Technology Ltd | A verification method was removed",
+    "file": "templates/mfa_factor_unenrolled_notification.html"
+  }
+]

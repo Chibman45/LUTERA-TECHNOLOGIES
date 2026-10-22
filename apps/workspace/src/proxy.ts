@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { workspaceOrigin } from "./lib/origin";
 export function proxy(request: NextRequest) {
+  if (
+    process.env.VERCEL_ENV === "production" &&
+    request.nextUrl.hostname.endsWith(".vercel.app")
+  ) {
+    const target = new URL(workspaceOrigin());
+    if (target.hostname !== request.nextUrl.hostname) {
+      target.pathname = request.nextUrl.pathname;
+      target.search = request.nextUrl.search;
+      return NextResponse.redirect(target, 308);
+    }
+  }
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const development = process.env.NODE_ENV !== "production";
   const policy = [

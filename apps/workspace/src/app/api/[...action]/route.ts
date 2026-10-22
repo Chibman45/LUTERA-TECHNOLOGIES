@@ -19,6 +19,7 @@ import {
 } from "@/lib/contracts";
 import { financialExport, cardExport } from "@/lib/exports";
 import { encryptBackup } from "@/lib/backup";
+import { completeEmailAction, EmailActionError } from "@/lib/auth-email";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -283,6 +284,23 @@ export async function POST(
     }
     const input = await readBody(request),
       action = (await context.params).action.join("/");
+    if (action === "auth/email-confirm") {
+      try {
+        const result = await completeEmailAction(await database(), input);
+        if (result.next === "email_pending") return ok(result);
+        const entry = process.env.WORKSPACE_ENTRY || "";
+        if (!/^[A-Za-z0-9_-]{32,128}$/.test(entry))
+          throw new Failure("Workspace entry is unavailable", 503);
+        return ok({
+          ...result,
+          redirect: `/${entry}${result.next === "password" ? "?account=password" : ""}`,
+        });
+      } catch (error) {
+        if (error instanceof EmailActionError)
+          throw new Failure(error.message, error.status);
+        throw error;
+      }
+    }
     if (action === "auth/signin") {
       const body = z
         .object({ email: z.email(), password: z.string().min(1).max(256) })
