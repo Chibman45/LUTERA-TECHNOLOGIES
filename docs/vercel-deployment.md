@@ -1,7 +1,9 @@
-# Organization transfer and Vercel deployment
+# Vercel-only deployment
 
-Prepared 22 October 2026. The public static site has Vercel build configuration;
-no Vercel production deployment or custom-domain change has been made.
+Updated 22 October 2026. Vercel is the only supported website host. GitHub retains
+the source and CI checks; the GitHub Pages publishing workflow is removed.
+Importing the repository into Vercel starts deployment. No Vercel production
+deployment or custom-domain change has been made by this update.
 
 ## Repository transfer
 
@@ -16,12 +18,11 @@ Other existing checkouts can update their remote with:
 git remote set-url origin https://github.com/luteratech/LUTERA-TECHNOLOGIES.git
 ```
 
-GitHub redirects transferred repository URLs, but GitHub Pages website addresses
-are separate. The expected organization review address after a successful Pages
-deployment is https://luteratech.github.io/LUTERA-TECHNOLOGIES/.
-The build derives its Pages origin from `GITHUB_REPOSITORY_OWNER` in Actions,
-so metadata, sitemap and form returns follow the new owner on the next build.
-Keep the Pages workflow until the replacement hosting is verified.
+The repository transfer retained its existing history. Do not re-enable GitHub
+Pages or add a Pages publisher. Deployment is handled by Vercel’s Git integration.
+If an old copy is still published, the repository owner can unpublish it under
+**Settings → Pages → Unpublish site**. The connected app can disable the workflow
+but the Pages deletion API requires both Pages and Administration write permissions.
 
 ## Import into Vercel
 
@@ -64,16 +65,16 @@ and rebuild. Custom domains and the `.com.ng` redirect remain deferred.
   an empty sitemap and omit its robots advertisement. Preview form returns point
   to the preview deployment when `VERCEL_URL` is available.
 - Both forms keep their existing FormSubmit recipient, fields and native HTTPS POST.
-- The privacy notice identifies Vercel as the hosting provider in Vercel builds;
-  GitHub Pages builds continue identifying GitHub Pages.
+- The privacy notice identifies Vercel as the hosting provider.
 - Only public pages/assets are packaged. Source, content files, documentation,
   tests, environment files and private records are not served from `_site`.
 - Legacy `/LUTERA-TECHNOLOGIES/...` paths on the Vercel hostname redirect to their
   root-hosted equivalents. This cannot redirect requests arriving at GitHub's old hostname.
 - Unknown routes use the static `404.html`; there is no catch-all homepage rewrite.
 
-The Vercel builder stages its work in a temporary directory. It never rewrites
-the committed GitHub Pages pages or sitemap.
+The builder stages its work in a temporary directory. Committed legacy HTML
+snapshots are not the deployment output; Vercel serves only the freshly generated
+`_site` directory.
 
 ## Verification
 
@@ -87,13 +88,11 @@ Open http://localhost:8000/ for a local root-hosted preview. Test both forms wit
 intercepted requests so test messages are not sent to the business inbox. Check
 the eight service links, enquiry list, quote steps, consent, hero, mobile menu,
 unknown-route response and legacy redirects on the actual Vercel deployment
-before assigning custom domains or retiring GitHub Pages.
+before assigning custom domains.
 
-Production/preview packaging checks run in GitHub Actions, alongside browser
-matrices for GitHub Pages and Vercel root hosting. To run the root-hosted browser
-checks locally against the built artifact, set `LUTERA_TEST_DIR=_site` and
-`LUTERA_TEST_BASE=/`. Suites also accept `LUTERA_TEST_URL` for testing another
-served deployment.
+Production/preview packaging and root-hosted browser checks run in GitHub Actions.
+Browser tests default to the built `_site` directory at `/`. Suites also accept
+`LUTERA_TEST_URL` for testing another served deployment.
 
 The private admin workspace, invoice/receipt tools, staff-card generators and
 document exports remain outside this public-site preparation.

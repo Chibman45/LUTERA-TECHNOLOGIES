@@ -1,14 +1,14 @@
 """Notify IndexNow engines after deployment; only public sitemap URLs are sent.
 
 The validation token is intentionally published at keyLocation. It is not an
-account credential. The nested keyLocation confines notifications to this site.
+account credential. The keyLocation and URLs are scoped to the built production origin.
 """
 from pathlib import Path
 from urllib.request import Request,urlopen
 from urllib.parse import urlsplit
 import xml.etree.ElementTree as ET
-import json,re,sys
-ROOT=Path(__file__).resolve().parents[1]
+import json,os,re,sys
+ROOT=Path(os.environ.get('SITE_OUTPUT_DIR',Path(__file__).resolve().parents[1]/'_site')).resolve()
 urls=[node.text for node in ET.parse(ROOT/'sitemap.xml').findall('.//{*}loc')]
 home=urls[0];key=(ROOT/'indexnow.txt').read_text().strip()
 assert home.startswith('https://') and home.endswith('/')

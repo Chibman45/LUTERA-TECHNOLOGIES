@@ -1,4 +1,4 @@
-"""Build a root-hosted static artifact without rewriting GitHub Pages files."""
+"""Build the root-hosted Vercel artifact from shared sources."""
 from pathlib import Path
 from urllib.parse import urlsplit
 import os
@@ -37,8 +37,7 @@ def build():
     canonical = origin(canonical)
     callback = origin('https://' + os.environ['VERCEL_URL']) if preview and os.environ.get('VERCEL_URL') else canonical
     environment = dict(os.environ, SITE_BASE='/', SITE_ORIGIN=canonical,
-                       FORM_ORIGIN=callback, SITE_NOINDEX='1' if preview else '0',
-                       SITE_HOSTING='vercel')
+                       FORM_ORIGIN=callback, SITE_NOINDEX='1' if preview else '0')
     with tempfile.TemporaryDirectory(prefix='lutera-vercel-') as temporary:
         stage = Path(temporary)
         for name in ('scripts', 'content', 'assets'):

@@ -16,38 +16,33 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: python scripts/build.py
-      - run: python scripts/check.py
-      - run: python scripts/check_seo.py
-      - run: python scripts/submit_indexnow.py
       - run: node --check assets/consent.js
       - run: node --check assets/app.js
       - run: node --check assets/experience.js
       - run: node --check assets/motion.js
       - name: Verify Vercel production and preview artifacts
         run: python tests/build_vercel.py
+      - name: Build production artifact and validate search notification payload
+        env:
+          SITE_ORIGIN: https://lutera-ci.example
+        run: |
+          python scripts/build_vercel.py
+          python scripts/submit_indexnow.py
   browser:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        hosting: [github-pages, vercel]
     env:
-      LUTERA_TEST_DIR: ${{ matrix.hosting == 'vercel' && '_site' || '.' }}
-      LUTERA_TEST_BASE: ${{ matrix.hosting == 'vercel' && '/' || '/LUTERA-TECHNOLOGIES/' }}
+      LUTERA_TEST_DIR: _site
+      LUTERA_TEST_BASE: /
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Build public pages
-        env:
-          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
-          BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
-        run: python scripts/build.py
-      - name: Build Vercel root-hosted pages
-        if: matrix.hosting == 'vercel'
+      - name: Build Vercel public pages
         env:
           SITE_ORIGIN: https://lutera-ci.example
+          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+          BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
         run: python scripts/build_vercel.py
       - name: Install browser test dependencies
         run: |

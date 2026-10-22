@@ -4,7 +4,7 @@ from pathlib import Path
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from functools import partial
 from urllib.parse import parse_qs,urlsplit
-ROOT=Path(os.environ.get('LUTERA_TEST_DIR',Path(__file__).resolve().parents[1])).resolve()
+ROOT=Path(os.environ.get('LUTERA_TEST_DIR',Path(__file__).resolve().parents[1]/'_site')).resolve()
 class Handler(SimpleHTTPRequestHandler):
  def translate_path(self,path):return super().translate_path(path.removeprefix('/LUTERA-TECHNOLOGIES'))
  def log_message(self,*args):pass
@@ -13,7 +13,7 @@ base=os.environ.get('LUTERA_TEST_URL')
 if not base:
  server=ThreadingHTTPServer(('127.0.0.1',0),partial(Handler,directory=str(ROOT)))
  threading.Thread(target=server.serve_forever,daemon=True).start()
- base=f'http://127.0.0.1:{server.server_port}'+os.environ.get('LUTERA_TEST_BASE','/LUTERA-TECHNOLOGIES/')
+ base=f'http://127.0.0.1:{server.server_port}'+os.environ.get('LUTERA_TEST_BASE','/')
 # Programmatic route jumps here represent internal browsing within the visit.
 def visit(page,url,**options):
  return page.goto(url,referer=base,**options)

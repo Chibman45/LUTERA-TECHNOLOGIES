@@ -4,13 +4,14 @@ Public, database-free website for Lutera’s eight services: IT procurement, har
 
 Repository: **https://github.com/luteratech/LUTERA-TECHNOLOGIES**
 
-GitHub Pages review address: **https://luteratech.github.io/LUTERA-TECHNOLOGIES/**
+Hosting: **Vercel only**. GitHub stores the source and runs checks; the GitHub Pages publishing workflow has been removed.
 
 The original repository has been transferred from `Chibman45` to `luteratech`,
-retaining its history. Vercel deployment configuration is prepared in
-`vercel.json`. See [Vercel setup](docs/vercel-deployment.md) for import steps,
-build settings and verification. No Vercel production release or DNS cutover
-has been performed.
+retaining its history. Import it into Vercel, choose **Other** as the framework
+preset and leave the root directory at the repository root. `vercel.json`
+already sets the build command and output directory. Vercel deploys `main` after
+import and on subsequent pushes. See [Vercel setup](docs/vercel-deployment.md) for
+details. No Vercel production URL or DNS cutover has been created by this update.
 
 The owner has deferred connecting `luteratech.com` and `luteratech.com.ng` until review is complete. No DNS, registrar or custom-domain settings are changed by this rebrand. The future private business workspace is also deferred; this repository does not contain an admin login, invoice system or staff-card generator.
 
@@ -35,9 +36,8 @@ The non-modal cookie notice offers equally prominent accept/reject choices on ev
 ## Build and checks
 
 ```sh
-python scripts/build.py
-python scripts/check.py
-python scripts/check_seo.py
+python tests/build_vercel.py
+SITE_ORIGIN=https://your-assigned-production-host.vercel.app python scripts/build_vercel.py
 python scripts/submit_indexnow.py  # validate only, no network notification
 node --check assets/app.js
 node --check assets/experience.js
@@ -51,8 +51,8 @@ python tests/browser_experience.py
 python tests/browser_consent.py
 ```
 
-Browser tests start their own local server. Set `LUTERA_TEST_URL` to test another deployment. Pages default to `/LUTERA-TECHNOLOGIES/`; `SITE_BASE` and `SITE_ORIGIN` support a later coordinated domain cutover. GitHub Actions builds, validates and deploys only the public pages/assets. No content directory, development scripts or tests are packaged into the Pages artifact.
+Browser tests start their own local server against `_site` at `/`. Set `LUTERA_TEST_URL` to test a deployed site. The Vercel build uses root paths and the assigned production hostname. GitHub Actions validates the build and browser flows; it does not publish a website. Only public pages/assets from `_site` are deployed.
 
 ## Search visibility
 
-All 19 pages retain their existing paths, unique metadata, canonical URLs and social cards. The sitemap contains 17 indexable URLs; error/confirmation pages are excluded and marked noindex. Organization, WebSite, Service and Breadcrumb structured data use the current company identity and GitHub Pages address. IndexNow notifications follow deployment; receipt is not evidence of indexing. Google Search Console/Bing ownership setup remains separate; see `docs/search-engine-setup.md`.
+All 19 pages retain their existing paths, unique metadata, canonical URLs and social cards. The sitemap contains 17 indexable URLs; error/confirmation pages are excluded and marked noindex. Organization, WebSite, Service and Breadcrumb structured data use the resolved Vercel production origin. Preview builds are noindex. Search ownership verification and post-launch sitemap submission use the deployed Vercel address; see `docs/search-engine-setup.md`.

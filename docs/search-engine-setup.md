@@ -1,37 +1,75 @@
 # Search engine ownership and indexing
 
-The site is public and can be crawled without a login. Automated SEO checks do not prove that a search engine has indexed the site or that a particular ranking will follow. The owner confirmed that Google Search Console and Bing Webmaster Tools have not been set up yet.
+Vercel is the website host. Complete these steps after importing the repository
+and obtaining a working production URL. Use that exact URL until the approved
+custom domain is connected. GitHub Pages addresses are no longer hosting targets.
+The owner has not yet completed Google Search Console or Bing Webmaster setup.
 
 ## Google Search Console
 
 1. Sign in at [Google Search Console](https://search.google.com/search-console/).
-2. Add a **URL-prefix** property using the exact address `https://luteratech.github.io/LUTERA-TECHNOLOGIES/`. The shared `github.io` domain is not a domain that LUTERA can verify through DNS.
-3. Choose **HTML tag** under ownership verification and copy the `content` value from Google's `google-site-verification` meta tag.
-4. Send that meta tag to Codex, or add its content value as the GitHub repository Actions variable `GOOGLE_SITE_VERIFICATION`. The deployment workflow reads the variable; it is a public ownership token, not a password. Re-run the **Deploy LUTERA to GitHub Pages** workflow, check the tag in the homepage source, then click **Verify** in Search Console.
-5. Open **Sitemaps** and submit `https://luteratech.github.io/LUTERA-TECHNOLOGIES/sitemap.xml`.
-6. Use **URL Inspection** for the homepage and the four new service pages. If eligible, select **Request indexing**. Check the Pages and Performance reports as Google collects data.
+2. Add a **URL-prefix** property for the exact Vercel production address, including
+   `https://` and the final `/`. For a later custom domain, domain verification is
+   also available when you control its DNS.
+3. Choose **HTML tag** and copy the `content` value of the
+   `google-site-verification` meta tag.
+4. In **Vercel → Project → Settings → Environment Variables**, add the public value
+   as `GOOGLE_SITE_VERIFICATION` for Production. Redeploy, check the homepage tag,
+   then click **Verify** in Search Console. Setting GitHub Actions variables alone
+   does not update the Vercel-hosted website.
+5. Submit the production site's `/sitemap.xml` in **Sitemaps**.
+6. Use **URL Inspection** for the homepage and service pages. Request indexing
+   where available, and review the Pages and Performance reports over time.
 
-Keep the ownership tag in place after verification. No Google account or verified Search Console property was created by this code update. The site does not need Analytics or advertising scripts to verify ownership.
+Keep the ownership tag after verification. The site does not need Analytics or
+advertising scripts to verify ownership. No Google account or verified property
+is created by the code itself.
 
 ## Bing Webmaster Tools
 
 1. Sign in at [Bing Webmaster Tools](https://www.bing.com/webmasters/).
-2. Add the same site URL. You can use its Google Search Console import when offered, or its HTML meta-tag verification method.
-3. For the meta-tag method, send the `msvalidate.01` meta tag to Codex, or save its content as the GitHub Actions variable `BING_SITE_VERIFICATION`, redeploy, then complete verification in Bing.
-4. Submit the same sitemap and review Bing's crawl/indexing reports.
+2. Add the same production URL. Use a Search Console import if offered, or choose
+   Bing's HTML meta-tag verification.
+3. For the tag method, set its public `content` value as `BING_SITE_VERIFICATION`
+   in the Vercel project's Production environment, redeploy and complete verification.
+4. Submit the production `/sitemap.xml` and review crawl/indexing reports.
 
 ## IndexNow notifications
 
-After a successful Pages deployment, the workflow sends only the public URLs in `sitemap.xml` to the IndexNow endpoint. `indexnow.txt` hosts the protocol's validation token at an explicit keyLocation under this project's path. It does not grant access to a Google or Bing account and does not claim the rest of the shared GitHub Pages hostname. The dry-run check validates the payload without contacting an engine.
+The Vercel build includes `indexnow.txt` and a production sitemap. GitHub Actions
+validates a notification payload but does not send it or publish the site.
+Vercel builds also do not send notifications before a deployment is available.
 
-An HTTP 200 response means the notification was received; HTTP 202 means receipt with key validation pending. Neither response proves crawling, indexing or ranking. Temporary notification failures do not fail or roll back the website deployment. Check the workflow step's log for the actual receipt. Google Search Console setup remains a separate owner action.
+After a successful production deployment, an operator can build an artifact for
+that exact live origin and run:
 
-## robots.txt on a GitHub project site
+```sh
+SITE_ORIGIN=https://your-live-production-host.vercel.app python scripts/build_vercel.py
+python scripts/submit_indexnow.py --submit
+```
 
-The project publishes `/LUTERA-TECHNOLOGIES/robots.txt`. Search engines obtain the authoritative file at the hostname root, `https://luteratech.github.io/robots.txt`. A missing robots file does **not** block crawling. A project-path robots file does not replace a root robots file; submit the sitemap directly in the verified tools above. This update does not create or alter a separate root-domain repository.
+The notifier reads `_site` by default. `SITE_OUTPUT_DIR` can select another built
+public artifact. It verifies the deployed public validation token before sending
+only that artifact's sitemap URLs. The token is not an account credential.
+Do not notify engines about fixture origins or preview builds.
 
-## What improves discovery over time
+HTTP 200 means the notification was received; HTTP 202 means key validation is
+pending. Neither proves crawling, indexing or ranking. Search Console verification
+and sitemap submission remain separate owner actions.
 
-Keep your company name, Abuja address and contact information consistent in accurate business listings and relevant links to the site. Keep service pages useful and current. A verified Google Business Profile may be useful if your business meets its eligibility requirements. Search engines control indexing and ranking; no Lighthouse score guarantees placement.
+## robots.txt and domain cutover
+
+The Vercel artifact serves `/robots.txt` and `/sitemap.xml` from the hostname root.
+Production has 17 indexable URLs; confirmation/error pages are excluded. Preview
+pages are noindex, their sitemap is empty and robots does not advertise it.
+
+During a later domain cutover, set `SITE_ORIGIN` to the verified custom origin,
+rebuild, verify its canonical/social/schema URLs and repeat ownership/sitemap
+setup for the chosen property. Custom-domain DNS and the `.com.ng` redirect
+remain outside the current change.
+
+Keep the company name, Abuja address and contacts consistent in accurate business
+listings. Publish useful service information and genuine project material.
+Search engines control indexing and ranking; Lighthouse scores do not guarantee placement.
 
 Sources: [Google SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide), [ownership verification](https://support.google.com/webmasters/answer/9008080), [sitemap guidance](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap), [robots.txt guidance](https://developers.google.com/search/docs/crawling-indexing/robots/intro), [IndexNow protocol](https://www.indexnow.org/documentation).

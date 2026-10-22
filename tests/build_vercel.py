@@ -4,10 +4,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 import json
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -88,20 +86,9 @@ for settings in ({}, {'SITE_ORIGIN': 'https://example.com/not-an-origin/'},
                             env=dict(environment, **settings), capture_output=True)
     assert result.returncode != 0
 assert before == {p: sha256(p.read_bytes()).hexdigest() for p in source_files}
-with tempfile.TemporaryDirectory(prefix='lutera-owner-test-') as temporary:
-    stage = Path(temporary)
-    for name in ('scripts', 'content', 'assets'):
-        shutil.copytree(ROOT / name, stage / name,
-                        ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
-    subprocess.run([sys.executable, str(stage / 'scripts/build.py')], cwd=stage,
-                   env=dict(environment, GITHUB_REPOSITORY_OWNER='luteratech'), check=True)
-    page = Page(); page.feed((stage / 'contact/index.html').read_text())
-    assert page.canonical == 'https://luteratech.github.io/LUTERA-TECHNOLOGIES/contact/'
-    assert page.returns == ['https://luteratech.github.io/LUTERA-TECHNOLOGIES/thank-you/']
-    assert 'GitHub Pages serves this website' in (stage / 'privacy/index.html').read_text()
 configuration = json.loads((ROOT / 'vercel.json').read_text())
 assert configuration['outputDirectory'] == '_site' and configuration['trailingSlash']
 assert configuration['framework'] is None
 print('PASS Vercel production/preview builds: 19 root-hosted pages, 17 production sitemap URLs, '
       'preview noindex, canonical/callback separation, unchanged email transport, public-only '
-      'artifact, invalid-origin rejection, organization Pages origin and unchanged source files.')
+      'artifact, invalid-origin rejection, unchanged source files.')

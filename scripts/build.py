@@ -12,12 +12,11 @@ from seo import metadata, schema, add_digital_pages
 from experience import enhance, chrome
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = os.environ.get('SITE_BASE', '/LUTERA-TECHNOLOGIES/').rstrip('/') + '/'
-GITHUB_OWNER = os.environ.get('GITHUB_REPOSITORY_OWNER', 'luteratech').lower()
-ORIGIN = os.environ.get('SITE_ORIGIN', f'https://{GITHUB_OWNER}.github.io').rstrip('/')
+BASE = os.environ.get('SITE_BASE', '/').rstrip('/') + '/'
+ORIGIN = os.environ['SITE_ORIGIN'].rstrip('/')
 FORM_ORIGIN = os.environ.get('FORM_ORIGIN', ORIGIN).rstrip('/')
 NOINDEX = os.environ.get('SITE_NOINDEX') == '1'
-HOSTING_PROVIDER = 'Vercel' if os.environ.get('SITE_HOSTING') == 'vercel' else 'GitHub Pages'
+HOSTING_PROVIDER = 'Vercel'
 REV = 'services2'
 
 ICONS = {
@@ -187,5 +186,4 @@ for route,(page_title,body) in pages.items():
     destination.write_text(responsive_photos(doc.replace('↗',arrow).replace('<br>','<br> ')))
 (ROOT/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join('<url><loc>'+ORIGIN+url(r)+'</loc></url>' for r in pages if not NOINDEX and r not in ['404','thank-you'])+'</urlset>')
 (ROOT/'robots.txt').write_text('User-agent: *\nAllow: /\n'+('' if NOINDEX else 'Sitemap: '+ORIGIN+BASE+'sitemap.xml\n'))
-(ROOT/'.nojekyll').touch()
 print(f'Built {len(pages)} public pages at {ORIGIN+BASE}')
