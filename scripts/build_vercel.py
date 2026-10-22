@@ -1,6 +1,7 @@
 """Build the root-hosted Vercel artifact from shared sources."""
 from pathlib import Path
 from urllib.parse import urlsplit
+import json
 import os
 import re
 import shutil
@@ -26,13 +27,14 @@ def origin(value):
 
 def build():
     preview = os.environ.get('VERCEL_ENV') == 'preview'
-    canonical = os.environ.get('SITE_ORIGIN')
+    configuration = json.loads((ROOT / 'content/site.json').read_text())
+    canonical = os.environ.get('SITE_ORIGIN') or configuration.get('hosting', {}).get('production_origin')
     if not canonical:
         host = os.environ.get('VERCEL_PROJECT_PRODUCTION_URL')
         if not host and os.environ.get('VERCEL_ENV') == 'production':
             host = os.environ.get('VERCEL_URL')
         if not host:
-            raise ValueError('Set SITE_ORIGIN or expose VERCEL_PROJECT_PRODUCTION_URL in Vercel.')
+            raise ValueError('Configure hosting.production_origin, SITE_ORIGIN or VERCEL_PROJECT_PRODUCTION_URL.')
         canonical = 'https://' + host
     canonical = origin(canonical)
     callback = origin('https://' + os.environ['VERCEL_URL']) if preview and os.environ.get('VERCEL_URL') else canonical

@@ -11,9 +11,9 @@ retaining its history. Import it into Vercel, choose **Other** as the framework
 preset and leave the root directory at the repository root. `vercel.json`
 already sets the build command and output directory. Vercel deploys `main` after
 import and on subsequent pushes. See [Vercel setup](docs/vercel-deployment.md) for
-details. No Vercel production URL or DNS cutover has been created by this update.
+details. The approved primary domain is **https://luteratech.com/**.
 
-The owner has deferred connecting `luteratech.com` and `luteratech.com.ng` until review is complete. No DNS, registrar or custom-domain settings are changed by this rebrand. The future private business workspace is also deferred; this repository does not contain an admin login, invoice system or staff-card generator.
+The owner has now connected the custom domains in Vercel/Cloudflare. `content/site.json` records the approved primary origin and redirect aliases. Vercel must connect the primary domain to Production and permanently redirect the aliases, retaining paths and query strings. The future private business workspace is still deferred; this repository does not contain an admin login, invoice system or staff-card generator.
 
 ## Brand and content
 
@@ -37,7 +37,7 @@ The non-modal cookie notice offers equally prominent accept/reject choices on ev
 
 ```sh
 python tests/build_vercel.py
-SITE_ORIGIN=https://your-assigned-production-host.vercel.app python scripts/build_vercel.py
+python scripts/build_vercel.py
 python scripts/submit_indexnow.py  # validate only, no network notification
 node --check assets/app.js
 node --check assets/experience.js
@@ -49,9 +49,10 @@ python tests/browser_brand.py
 python tests/browser_hero.py
 python tests/browser_experience.py
 python tests/browser_consent.py
+python scripts/review_live.py  # read-only checks against the primary domain and aliases
 ```
 
-Browser tests start their own local server against `_site` at `/`. Set `LUTERA_TEST_URL` to test a deployed site. The Vercel build uses root paths and the assigned production hostname. GitHub Actions validates the build and browser flows; it does not publish a website. Only public pages/assets from `_site` are deployed.
+Browser tests start their own local server against `_site` at `/`. Set `LUTERA_TEST_URL` to test a deployed site. The Vercel build uses root paths and the approved custom origin; `SITE_ORIGIN` is an explicit override for test artifacts or a later approved move. GitHub Actions validates the build and browser flows; it does not publish a website. Only public pages/assets from `_site` are deployed.
 
 ## Search visibility
 

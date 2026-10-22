@@ -73,14 +73,21 @@ def check(settings, canonical, callback, preview):
     assert before == {p: sha256(p.read_bytes()).hexdigest() for p in source_files}
 
 
-check({'VERCEL_ENV': 'production', 'VERCEL_PROJECT_PRODUCTION_URL': 'lutera-build.example',
+check({'VERCEL_ENV': 'production', 'VERCEL_PROJECT_PRODUCTION_URL': 'luterawebsite.vercel.app',
+       'VERCEL_URL': 'production-deployment.example'},
+      'https://luteratech.com', 'https://luteratech.com', False)
+check({'VERCEL_ENV': 'preview', 'VERCEL_PROJECT_PRODUCTION_URL': 'luterawebsite.vercel.app',
+       'VERCEL_URL': 'lutera-preview.example'},
+      'https://luteratech.com', 'https://lutera-preview.example', True)
+check({'VERCEL_ENV': 'production', 'SITE_ORIGIN': 'https://lutera-build.example',
+       'VERCEL_PROJECT_PRODUCTION_URL': 'unused-production.example',
        'VERCEL_URL': 'production-deployment.example', 'SITE_BASE': '/obsolete/'},
       'https://lutera-build.example', 'https://lutera-build.example', False)
 check({'VERCEL_ENV': 'preview', 'SITE_ORIGIN': 'https://lutera-canonical.example',
        'VERCEL_PROJECT_PRODUCTION_URL': 'unused-production.example',
        'VERCEL_URL': 'lutera-preview.example'},
       'https://lutera-canonical.example', 'https://lutera-preview.example', True)
-for settings in ({}, {'SITE_ORIGIN': 'https://example.com/not-an-origin/'},
+for settings in ({'SITE_ORIGIN': 'https://example.com/not-an-origin/'},
                  {'SITE_ORIGIN': 'https://user:password@example.com'}):
     result = subprocess.run([sys.executable, 'scripts/build_vercel.py'], cwd=ROOT,
                             env=dict(environment, **settings), capture_output=True)

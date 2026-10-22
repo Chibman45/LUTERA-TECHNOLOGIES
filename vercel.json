@@ -7,6 +7,24 @@
   "trailingSlash": true,
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [{"type": "host", "value": "www.luteratech.com"}],
+      "destination": "https://luteratech.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{"type": "host", "value": "luteratech.com.ng"}],
+      "destination": "https://luteratech.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{"type": "host", "value": "www.luteratech.com.ng"}],
+      "destination": "https://luteratech.com/:path*",
+      "permanent": true
+    },
+    {
       "source": "/LUTERA-TECHNOLOGIES",
       "destination": "/",
       "permanent": true

@@ -1,4 +1,12 @@
 {
+  "hosting": {
+    "production_origin": "https://luteratech.com",
+    "redirect_origins": [
+      "https://www.luteratech.com",
+      "https://luteratech.com.ng",
+      "https://www.luteratech.com.ng"
+    ]
+  },
   "company": {
     "name": "Lutera Technology Ltd",
     "legal_name": "Lutera Technology Ltd",

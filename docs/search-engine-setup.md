@@ -1,23 +1,24 @@
 # Search engine ownership and indexing
 
-Vercel is the website host. Complete these steps after importing the repository
-and obtaining a working production URL. Use that exact URL until the approved
-custom domain is connected. GitHub Pages addresses are no longer hosting targets.
+Vercel is the website host. The approved primary address is
+**https://luteratech.com/**. Use this domain for ownership and sitemap submission.
+GitHub Pages addresses are no longer hosting targets.
 The owner has not yet completed Google Search Console or Bing Webmaster setup.
 
 ## Google Search Console
 
 1. Sign in at [Google Search Console](https://search.google.com/search-console/).
-2. Add a **URL-prefix** property for the exact Vercel production address, including
-   `https://` and the final `/`. For a later custom domain, domain verification is
-   also available when you control its DNS.
+2. Add a **Domain** property for `luteratech.com` and follow Google's TXT-record
+   verification instructions in Cloudflare DNS. Use Google's exact generated
+   value; keep the record after verification. Alternatively, add the
+   **URL-prefix** property `https://luteratech.com/` and use the HTML-tag steps below.
 3. Choose **HTML tag** and copy the `content` value of the
    `google-site-verification` meta tag.
 4. In **Vercel → Project → Settings → Environment Variables**, add the public value
    as `GOOGLE_SITE_VERIFICATION` for Production. Redeploy, check the homepage tag,
    then click **Verify** in Search Console. Setting GitHub Actions variables alone
    does not update the Vercel-hosted website.
-5. Submit the production site's `/sitemap.xml` in **Sitemaps**.
+5. Submit `https://luteratech.com/sitemap.xml` in **Sitemaps**.
 6. Use **URL Inspection** for the homepage and service pages. Request indexing
    where available, and review the Pages and Performance reports over time.
 
@@ -44,7 +45,8 @@ After a successful production deployment, an operator can build an artifact for
 that exact live origin and run:
 
 ```sh
-SITE_ORIGIN=https://your-live-production-host.vercel.app python scripts/build_vercel.py
+python scripts/build_vercel.py
+python scripts/review_live.py
 python scripts/submit_indexnow.py --submit
 ```
 
@@ -63,10 +65,12 @@ The Vercel artifact serves `/robots.txt` and `/sitemap.xml` from the hostname ro
 Production has 17 indexable URLs; confirmation/error pages are excluded. Preview
 pages are noindex, their sitemap is empty and robots does not advertise it.
 
-During a later domain cutover, set `SITE_ORIGIN` to the verified custom origin,
-rebuild, verify its canonical/social/schema URLs and repeat ownership/sitemap
-setup for the chosen property. Custom-domain DNS and the `.com.ng` redirect
-remain outside the current change.
+The production origin is committed in `content/site.json`; `SITE_ORIGIN` is an
+explicit override. The Vercel deployment must publish the final-domain artifact
+before submitting it to search engines. The live review checks canonical/social/
+schema URLs and alias redirects. Only notify IndexNow after the complete review
+passes, so engines receive the intended live URLs rather than a preview or an
+old sitemap.
 
 Keep the company name, Abuja address and contacts consistent in accurate business
 listings. Publish useful service information and genuine project material.

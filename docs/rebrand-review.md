@@ -1,6 +1,6 @@
 # Public rebrand implementation review
 
-21 October 2026. Scope: the agreed public website review direction, with the owner’s latest clarifications applied. The company name is Lutera Technology Ltd; no RC number is displayed. Registration-pending notices are removed. Custom domains/DNS and the private business workspace remain deferred at the owner’s request.
+Updated 22 October 2026. Scope: the agreed public website review direction, with the owner’s latest clarifications applied. The company name is Lutera Technology Ltd; no RC number is displayed. Registration-pending notices are removed. Hosting is Vercel only; the owner has connected the custom domains. The private business workspace remains a separate, deferred phase.
 
 ## Implemented
 
@@ -10,7 +10,8 @@
 - Confirmed address and company details; inspection, local spares, named support and warranty-start wording. Two-working-day enquiry responses are distinguished from fault resolution/delivery commitments; warranty duration/coverage remain subject to written quotation.
 - Restyled quote wizard, equipment enquiry list, comparison, contact form and floating contact control. Existing form IDs and transport fields, native HTTPS submission and chimaster010@gmail.com routing remain intact.
 - Fresh-visit consent and footer settings, keyboard controls, reduced motion and no-JavaScript forms/navigation. The former renderer, Three.js bundle, cinematic/tilt effects and old brand artwork are removed.
-- Existing 19 routes, 17 indexable sitemap entries, canonicals, social metadata and Organization/WebSite/Service/Breadcrumb schema retained on the GitHub Pages address. No Projects route or unsupported customer/certification claims introduced.
+- Existing 19 routes, 17 indexable sitemap entries, canonicals, social metadata and Organization/WebSite/Service/Breadcrumb schema retained. The current build uses `https://luteratech.com` for production metadata and form returns; preview builds remain noindex with preview-specific form returns. No Projects route or unsupported customer/certification claims introduced.
+- GitHub Pages unpublished and its deployment workflow removed. Vercel builds the public-only `_site` artifact from shared sources. A read-only live review checks deployed metadata, native form destinations, real unknown-route status and permanent alias redirects with path/query preservation.
 
 ## Verification
 
@@ -22,6 +23,6 @@ Visual review covers desktop homepage, Services, Solutions, About, Contact and q
 
 ## Deferred
 
-- DNS changes, custom-domain connection, HTTPS cutover and .com.ng redirects, until the owner accepts the GitHub Pages review site.
+- Final release evidence and domain redirect status are tracked in `launch-review.md`. Google Search Console/Bing ownership and actual inbox delivery remain owner/provider checks.
 - The separate authenticated private workspace and document/card generators. See `private-workspace-deferred.md`.
 - Actual project/customer evidence and detailed warranty duration/coverage until supplied; representative images and written-quotation scope remain explicit.
