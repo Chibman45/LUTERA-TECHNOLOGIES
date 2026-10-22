@@ -15,8 +15,18 @@ records were imported; no invitations or test emails were sent.
 Both Vercel and Supabase connections are available. The baseline and record-guard
 migrations are applied, migration versions are reconciled, and the full access
 suite passes on the actual Supabase project with all fixtures rolled back.
-Private-project deployment and the owner's first verified Auth login/MFA setup
-are the remaining launch steps. The approved owner Auth user does not yet exist.
+The private **lutera-workspace** Vercel project is deployed from this repository,
+with Root Directory `apps/workspace`, at `https://lutera-workspace.vercel.app`.
+The generated entry path is held in Production environment settings, not in Git.
+The first production deployment (`dpl_3QpqfB8Lf8J21r5nuxzqbArdAYBm`) is READY.
+Default Vercel deployment protection is retained in addition to application
+authentication. The public project remains **lutera_website**, serving
+`https://luteratech.com`; its published snapshot build and all 32 live checks pass.
+
+The owner's first verified Auth login/MFA setup and the public-site deploy hook
+are still required. At the latest check the approved owner Auth user did not yet
+exist. No authenticated production owner session or workspace-triggered public
+publication is claimed as tested.
 
 ## Implemented features
 
@@ -79,7 +89,15 @@ and authenticator secrets. Backup encryption uses scrypt and AES-256-GCM; the
 password is not stored or logged. No private application data is committed to
 this public source repository.
 
-## Deploy the workspace
+## Deployment configuration and account setup
+
+Steps 1–2 describe the configuration already provisioned. The exact Production
+origin is `https://lutera-workspace.vercel.app`. An explicit `WORKSPACE_ORIGIN`
+was saved after the initial build; the initial deployment uses the tested
+`VERCEL_PROJECT_PRODUCTION_URL` fallback for the same origin. The next deployment
+will also apply the explicit value. `PUBLIC_SITE_DEPLOY_HOOK` is pending an
+owner-created hook; no secret has been requested in chat. Preview environments
+do not receive the production configuration.
 
 1. In the **0xluter-s-projects** Vercel team, import
    `luteratech/LUTERA-TECHNOLOGIES` into a **new project**. Set Root Directory to
@@ -229,11 +247,18 @@ Verified locally:
 - Supabase security advisor returned no lints after provisioning. Performance
   advisor reported only three unused indexes on the empty project
   ([explanation](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index)).
-- All 32 existing public live checks pass before publishing this source update.
+- All 32 existing public live checks pass after the updated production build;
+  `/site-revision.json` matches the seeded public snapshot.
+- Production browser check through retained Vercel protection: login renders
+  without JavaScript errors, password input is masked, and anonymous document
+  search returns 401. Root, `/admin` and a wrong entry return 404; anonymous
+  session/state return 401 and cross-origin mutations return 403. Responses
+  carry noindex/no-store and CSP headers. No owner credentials were entered.
 
 The actual Supabase access suite has passed, fixtures have rolled back and the
-security advisor still reports no findings. Before launch: complete provider Auth settings and verified owner/MFA setup, deploy the separate
-Vercel app, connect its deploy hook, and exercise a real owner login/save/export/
+security advisor still reports no findings. The separate Vercel app is deployed.
+Before operational use: complete provider Auth settings and verified owner/MFA
+setup, connect its deploy hook, and exercise a real owner login/save/export/
 publish/sign-out cycle. Confirm an unauthorised account and a pre-MFA session
 cannot read records. Choose backup retention and complete a recovery drill.
 No actual payment or customer enquiry should be submitted during checks.
