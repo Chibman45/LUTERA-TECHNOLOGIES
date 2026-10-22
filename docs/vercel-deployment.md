@@ -73,8 +73,10 @@ Avoid conflicting domain-level redirects in Vercel or Cloudflare.
 - The privacy notice identifies Vercel as the hosting provider.
 - Only public pages/assets are packaged. Source, content files, documentation,
   tests, environment files and private records are not served from `_site`.
-- Legacy `/LUTERA-TECHNOLOGIES/...` paths on the Vercel hostname redirect to their
-  root-hosted equivalents. This cannot redirect requests arriving at GitHub's old hostname.
+- Legacy `/LUTERA-TECHNOLOGIES/...` migration rules are configured for the Vercel
+  hostname. The current live probe returned 404, so publish the verified root
+  paths and investigate Vercel routing/settings before relying on these extra
+  prefix rules. They cannot redirect requests arriving at GitHub's old hostname.
 - Unknown routes use the static `404.html`; there is no catch-all homepage rewrite.
 
 The builder stages its work in a temporary directory. Committed legacy HTML
