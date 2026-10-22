@@ -36,8 +36,9 @@ def service_cards(base, icon, heading="h3"):
         for s in SERVICES)+'</div>'
 
 def commitments(base):
+    support = next((s for s in SERVICES if s['key']=='support'), None)
     return '<section class="commitments"><div class="wrap"><div class="section-head"><h2>Clear commitments.<br>From the start.</h2><p>We reply to enquiries within two working days. Project scope, supply and service terms are agreed in writing.</p></div><div class="commitment-grid">'+''.join(
-        '<article><h3>'+escape(c['title'])+'</h3><p>'+escape(c['description'])+'</p></article>' for c in SITE['commitments'])+f'</div><a class="text-link" href="{base}services/technical-support/">Our installation and support approach ↗</a></div></section>'
+        '<article><h3>'+escape(c['title'])+'</h3><p>'+escape(c['description'])+'</p></article>' for c in SITE['commitments'])+'</div>'+ (f'<a class="text-link" href="{base}services/{support["slug"]}/">Our installation and support approach ↗</a>' if support else '')+'</div></section>'
 
 def digital_services(base):
     return ('<section class="digital-services" id="digital-solutions"><div class="wrap"><div class="section-head"><h2>Improve a workflow.<br>Connect your systems.</h2><p>Start with the process, application or decision you want to improve. Find the right place to begin below.</p></div><div class="digital-grid">'+''.join(

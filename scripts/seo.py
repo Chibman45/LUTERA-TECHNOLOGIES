@@ -1,5 +1,7 @@
 """Unique search metadata and structured data for public, crawlable HTML pages."""
 import json
+from html import escape
+from company import SERVICES
 
 PAGE_META={
  '':('Hardware, Software & AI | Lutera Technology Ltd','Abuja-based IT and AI solutions: AI agents, automation, software development, data analytics, cloud integration, hardware supply and technical support.'),
@@ -28,8 +30,12 @@ SERVICE_NAMES={
  'ai-automation':'AI agent development and business process automation','software-development':'Software design, development and implementation',
  'data-analytics':'Data analytics and business reporting','cloud-integration':'Cloud-based solutions and systems integration',
 }
+SERVICE_NAMES={s['slug']:s['title'] for s in SERVICES}
 
 def metadata(route):
+    if route.startswith('services/'):
+        service=next(s for s in SERVICES if s['slug']==route.split('/')[1])
+        return service['title']+' | Lutera Technology Ltd', service['description']
     title,description=PAGE_META[route]
     for old,new in [('LUTERA Technologies','Lutera Technology Ltd'),('LUTERA technology','Lutera technology'),('LUTERA','Lutera')]:
         title=title.replace(old,new);description=description.replace(old,new)
@@ -96,14 +102,25 @@ DIGITAL_PAGES={
 }
 
 def add_digital_pages(pages,base,pagehero,icon):
-    from company import DIGITAL_SERVICES, DIGITAL_SERVICE_IMAGES
+    from company import DIGITAL_SERVICES, DIGITAL_SERVICE_IMAGES, DIGITAL_SERVICE_SLUGS
     for key,label,short in DIGITAL_SERVICES:
-        slug,headline,intro,heading,copy,items,next_heading,next_copy,brief=DIGITAL_PAGES[key]
+        _,headline,intro,heading,copy,items,next_heading,next_copy,brief=DIGITAL_PAGES[key]
+        service=next(s for s in SERVICES if s['key']==key)
+        slug=service['slug']
         photo,alt=DIGITAL_SERVICE_IMAGES[key]
+        alt=escape(alt,quote=True)
         quote=f'<a class="btn" href="{base}request-quote/?category={key}">Discuss your project <span aria-hidden="true">↗</span></a>'
-        content=pagehero(headline.replace('\n','<br>'),intro,'IT & AI services',label)
+        content=pagehero(headline.replace('\n','<br>'),escape(short),'IT & AI services',escape(label))
         content+=f'<section><div class="wrap split"><div><h2>{heading}</h2><p>{copy}</p><ul class="ticks">'+''.join('<li>'+i+'</li>' for i in items)+f'</ul>{quote}</div><figure class="service-figure"><img src="{base}assets/photos/{photo}.jpg" width="960" height="640" loading="lazy" decoding="async" alt="{alt}"><figcaption>Illustrative solution imagery via Unsplash.</figcaption></figure></div></section>'
         content+=f'<section class="pale"><div class="wrap split"><div><h2>{next_heading}</h2><p>{next_copy}</p></div><div><h3>What to include in your enquiry</h3><ul class="ticks">'+''.join('<li>'+i+'</li>' for i in brief)+f'</ul>{quote}<p class="form-footnote">Project deliverables, timing and support terms are confirmed in writing. An online enquiry does not place an order.</p></div></div></section>'
-        content+=f'<section><div class="wrap"><h2>Explore related technology services.</h2><div class="related-services">'+''.join(f'<a class="text-link" href="{base}services/{DIGITAL_PAGES[other][0]}/">{title} ↗</a>' for other,title,_ in DIGITAL_SERVICES if other!=key)+f'<a class="text-link" href="{base}services/consulting/">IT consulting ↗</a></div></div></section>'
+        content+=f'<section><div class="wrap"><h2>Explore related technology services.</h2><div class="related-services">'+''.join(f'<a class="text-link" href="{base}services/{DIGITAL_SERVICE_SLUGS[other]}/">{escape(title)} ↗</a>' for other,title,_ in DIGITAL_SERVICES if other!=key)+'</div></div></section>'
         pages['services/'+slug]=(label,content)
+    # Generic and explicitly customised service pages follow the same public contract.
+    for service in SERVICES:
+        route='services/'+service['slug']
+        if route in pages and not service.get('detail'):continue
+        detail=service.get('detail',{'heading':service['title'],'body':service['description'],'points':['Tell us about your requirements, location and preferred timing.']})
+        body=pagehero(escape(service['title']),escape(service['description']),'',escape(service['title']))
+        body+=f'<section><div class="wrap split"><div><h2>{escape(detail["heading"])}</h2><p>'+escape(detail['body']).replace('\n','<br>')+'</p><ul class="ticks">'+''.join('<li>'+escape(point)+'</li>' for point in detail['points'])+f'</ul><a class="btn" href="{base}request-quote/?category={service["key"]}">Discuss your requirements ↗</a></div><figure class="service-figure"><img src="{base}assets/photos/{service["image"]}.jpg" width="960" height="640" loading="lazy" decoding="async" alt="{escape(service["alt"],quote=True)}"><figcaption>Representative technology photography.</figcaption></figure></div></section>'
+        pages[route]=(service['title'],body)
     return pages

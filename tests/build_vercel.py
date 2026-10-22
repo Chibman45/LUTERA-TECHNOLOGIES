@@ -32,10 +32,11 @@ class Page(HTMLParser):
             self.forms.append(attrs)
 
 
-source_files = [p for p in ROOT.rglob('*.html') if '_site' not in p.parts and '.git' not in p.parts]
+source_files = [p for p in ROOT.rglob('*.html') if not {'_site','.git','node_modules','.next','apps'} & set(p.parts)]
 source_files += [ROOT / 'sitemap.xml', ROOT / 'robots.txt']
 before = {p: sha256(p.read_bytes()).hexdigest() for p in source_files}
 environment = dict(os.environ)
+environment['LUTERA_CONTENT_SOURCE'] = 'repository'
 for key in ('SITE_BASE', 'SITE_ORIGIN', 'FORM_ORIGIN', 'SITE_NOINDEX',
             'VERCEL_ENV', 'VERCEL_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
     environment.pop(key, None)
@@ -46,7 +47,7 @@ def check(settings, canonical, callback, preview):
                    env=dict(environment, **settings), check=True)
     pages = list(OUTPUT.rglob('*.html'))
     assert len(pages) == 19
-    assert not any((OUTPUT / name).exists() for name in ('scripts', 'content', 'docs', 'tests', '.git', '.env', 'vercel.json'))
+    assert not any((OUTPUT / name).exists() for name in ('scripts', 'content', 'docs', 'tests', '.git', '.env', 'vercel.json', 'apps', 'supabase', 'node_modules'))
     form_count = 0
     for path in pages:
         html = path.read_text()

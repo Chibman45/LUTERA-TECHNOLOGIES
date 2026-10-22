@@ -6,7 +6,7 @@ import json
 import os
 import re
 
-from company import (COMPANY, SERVICES, STREET_ADDRESS, CITY, STATE, NATURE_OF_BUSINESS,
+from company import (SITE, COMPANY, SERVICES, STREET_ADDRESS, CITY, STATE, NATURE_OF_BUSINESS,
                      address_block, directions_link, company_details, service_cards, commitments)
 from consent import notice as consent_notice, STORAGE_NOTICE
 from seo import metadata, schema, add_digital_pages
@@ -119,7 +119,7 @@ DETAILS={
  'consulting':('Clear advice.<br>Better technology decisions.','Discuss the priorities, constraints and requirements behind your next equipment, software or systems decision.','Ask the useful questions first.', ['Technology planning and requirements discovery','AI, software, data and cloud implementation advice','Equipment specifications and procurement planning','Compatibility, systems integration and project scoping']),
  'technical-support':('Installed, commissioned<br>and supported.','From individual computers to a complete computer lab, plan the installation and support that makes the equipment useful.','The deliverable is a working setup.', ['Computer-lab seat and furniture layout, power and network planning','Computer installation, operating-system imaging and software loading','Structured cabling, asset tagging and a machine register','Seat-by-seat testing, commissioning and handover','Maintenance, troubleshooting and a named support contact']),
 }
-for service in SERVICES[:4]:
+for service in [s for s in SERVICES if s['slug'] in DETAILS]:
     headline,description,heading,items=DETAILS[service['slug']]
     quote=f'<a class="btn" href="{BASE}request-quote/?category={service["key"]}">Discuss your requirements ↗</a>'
     body=pagehero(headline,description,'',service['title'])
@@ -149,6 +149,8 @@ def copy_style(markup):
     return ''.join(parts)
 
 for route,(title,body) in list(pages.items()):
+    count = {1:'One',2:'Two',3:'Three',4:'Four',5:'Five',6:'Six',7:'Seven',8:'Eight',9:'Nine',10:'Ten'}.get(len(SERVICES),str(len(SERVICES)))
+    body=body.replace('Eight services.',count+' service'+('s' if len(SERVICES)!=1 else '')+'.').replace('all eight services','all our services')
     if route.startswith('services/'):
         body=body.replace('>Home</a><span aria-hidden="true">/</span>','>Home</a><span aria-hidden="true">/</span>'+link('services','Services')+'<span aria-hidden="true">/</span>',1)
     pages[route]=(title,copy_style(body))
@@ -158,6 +160,7 @@ def brand(dark=False):
     return f'<a class="brand" href="{url()}" aria-label="Lutera home"><img class="brand-lockup" src="{BASE}assets/logo/lutera-horizontal-{variant}.svg" width="112" height="32" alt="Lutera"></a>'
 
 footer='<footer data-theme="dark"><div class="wrap"><div class="footer-grid"><div>'+brand(True)+'<p>Hardware, software and intelligent systems.<br>Built around your organisation.</p><p class="footer-company">'+escape(COMPANY['legal_name'])+'</p></div><div><h2>Explore</h2>'+''.join(link(r,label) for r,label in [('about','About Lutera'),('services','Services'),('solutions','Solutions'),('request-quote','Request a quote'),('contact','Contact')])+'</div><div class="footer-services"><h2>Our services</h2>'+''.join(link('services/'+s['slug'],escape(s['title'])) for s in SERVICES)+'</div><div><h2>Let’s connect</h2><a href="mailto:'+COMPANY['email']+'">'+COMPANY['email']+'</a><a href="tel:'+COMPANY['phone']+'">'+COMPANY['display_phone']+'</a>'+address_block()+'</div></div><div class="footer-bottom"><span>© 2026 '+escape(COMPANY['legal_name'])+'</span><div>'+link('privacy','Privacy')+link('terms','Terms')+link('cookies','Cookies')+'<button class="cookie-settings" type="button" data-cookie-settings aria-controls="cookie-consent" hidden>Cookie settings</button><button class="motion-settings" type="button" data-motion-toggle aria-pressed="false" hidden>Pause background animation</button></div></div></div></footer>'
+footer=footer.replace(address_block(),address_block()+''.join('<a href="'+escape(s['url'],quote=True)+'" target="_blank" rel="noopener noreferrer">'+escape(s['label'])+'</a>' for s in SITE.get('socials',[])))
 def responsive_photos(markup):
     def optimise(match):
         tag=match.group()
@@ -183,7 +186,7 @@ script_revisions={name:sha256((ROOT/'assets'/f'{name}.js').read_bytes()).hexdige
 for route,(page_title,body) in pages.items():
     title,description=metadata(route)
     canonical=ORIGIN+BASE+'404.html' if route=='404' else ORIGIN+url(route)
-    organization={'@context':'https://schema.org','@type':'Organization','name':COMPANY['name'],'legalName':COMPANY['legal_name'],'url':ORIGIN+BASE,'description':NATURE_OF_BUSINESS,'email':COMPANY['email'],'telephone':COMPANY['phone'],'address':{'@type':'PostalAddress','streetAddress':STREET_ADDRESS,'addressLocality':CITY,'addressRegion':STATE,'addressCountry':'NG'}}
+    organization={'@context':'https://schema.org','@type':'Organization','name':COMPANY['name'],'legalName':COMPANY['legal_name'],'url':ORIGIN+BASE,'description':NATURE_OF_BUSINESS,'email':COMPANY['email'],'telephone':COMPANY['phone'],'address':{'@type':'PostalAddress','streetAddress':STREET_ADDRESS,'addressLocality':CITY,'addressRegion':STATE,'addressCountry':COMPANY['country']}}
     structured=schema(route,title,description,organization,ORIGIN,BASE)
     robots='noindex,follow' if NOINDEX or route in ['404','thank-you'] else 'index,follow,max-image-preview:large'
     verification=''.join(f'<meta name="{name}" content="{escape(os.environ[key],quote=True)}">' for key,name in [('GOOGLE_SITE_VERIFICATION','google-site-verification'),('BING_SITE_VERIFICATION','msvalidate.01')] if os.environ.get(key))
@@ -194,6 +197,7 @@ for route,(page_title,body) in pages.items():
 <meta property="og:title" content="{escape(title,quote=True)}"><meta property="og:description" content="{escape(description,quote=True)}"><meta property="og:type" content="website"><meta property="og:url" content="{canonical}"><meta property="og:image" content="{ORIGIN+BASE}assets/social.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Lutera — hardware, software and intelligent systems"><meta property="og:site_name" content="{escape(COMPANY['name'],quote=True)}"><meta property="og:locale" content="en_NG"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{escape(title,quote=True)}"><meta name="twitter:description" content="{escape(description,quote=True)}"><meta name="twitter:image" content="{ORIGIN+BASE}assets/social.png">
 <link rel="icon" href="{BASE}assets/logo/lutera-favicon.svg?v={REV}" type="image/svg+xml"><link rel="preload" href="{BASE}assets/fonts/Sora-400.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="{BASE}assets/fonts/Sora-500.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="{BASE}assets/fonts/Sora-600.woff2" as="font" type="font/woff2" crossorigin>{accent_preload}<link rel="stylesheet" href="{BASE}assets/{stylesheet}"><script src="{BASE}assets/consent.js?v={script_revisions["consent"]}" defer></script><script src="{BASE}assets/app.js?v={script_revisions["app"]}" defer></script><script src="{BASE}assets/experience.js?v={script_revisions["experience"]}" defer></script><script src="{BASE}assets/motion.js?v={script_revisions["motion"]}" defer></script><noscript><style>.enquiry-nav,[data-open-enquiry],.menu{{display:none!important}}@media(max-width:1023px){{header .nav{{height:auto;flex-wrap:wrap;padding-top:20px;padding-bottom:20px}}#navigation{{display:flex;position:static;width:100%;max-height:none;flex-wrap:wrap;padding:16px 0 0;border:0;box-shadow:none}}#navigation>a:not(.btn){{padding:8px}}}}</style></noscript>'''
     doc='<!DOCTYPE html><html lang="en-NG"><head>'+head+'</head><body data-page="'+route+'"><a href="#main" class="skip">Skip to content</a><header><div class="wrap nav">'+brand()+'<button class="menu" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="navigation"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><nav id="navigation" class="links" aria-label="Main navigation">'+nav+'</nav></div></header><main id="main" tabindex="-1">'+body+'</main>'+footer+chrome(BASE)+consent_notice(BASE)+'</body></html>'
+    doc=doc.replace('chimaster010@gmail.com',escape(COMPANY['email'],quote=True))
     destination=ROOT/('404.html' if route=='404' else route+'/index.html' if route else 'index.html')
     destination.parent.mkdir(parents=True,exist_ok=True)
     destination.write_text(responsive_photos(doc.replace('↗',arrow).replace('<br>','<br> ')))

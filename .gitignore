@@ -3,3 +3,10 @@ __pycache__/
 _site/
 .vercel/
 .env*
+!.env.example
+node_modules/
+.next/
+coverage/
+*.tsbuildinfo
+apps/workspace/test-results/
+apps/workspace/supabase/.temp/

@@ -3,6 +3,7 @@ from pathlib import Path
 from html.parser import HTMLParser
 from urllib.parse import urlsplit
 import json,struct,xml.etree.ElementTree as ET
+from company import SERVICES
 ROOT=Path(__file__).resolve().parents[1]
 class Page(HTMLParser):
  def __init__(self):super().__init__();self.title='';self.in_title=False;self.meta={};self.canon=[];self.structured=[];self.in_schema=False;self.schema_text='';self.hrefs=[]
@@ -24,7 +25,7 @@ assert struct.unpack('>II',image_bytes[16:24])==(1200,630)
 sitemap=ET.parse(ROOT/'sitemap.xml');urls={el.text for el in sitemap.findall('.//{*}loc')}
 seen_titles=set();seen_descriptions=set();indexed=set();all_hrefs=set()
 for f in ROOT.rglob('*.html'):
- if '.git' in f.parts or '_site' in f.parts:continue
+ if {'.git','_site','apps','node_modules','.next'} & set(f.parts):continue
  p=Page();p.feed(f.read_text());assert len(p.canon)==1,f
  canonical=p.canon[0];assert canonical.startswith('https://'),f
  assert p.title and p.title not in seen_titles,('duplicate/missing title',f)
@@ -46,6 +47,6 @@ for f in ROOT.rglob('*.html'):
   assert {'BreadcrumbList','Service'}<=types,f
   assert len(next(n for n in graph if n['@type']=='BreadcrumbList')['itemListElement'])==3,f
 assert urls==indexed,('sitemap mismatch',urls^indexed)
-for slug in ['ai-automation','software-development','data-analytics','cloud-integration']:
+for slug in [s['slug'] for s in SERVICES]:
  assert any(h.endswith('/services/'+slug+'/') for h in all_hrefs),('unlinked service',slug)
 print(f'PASS: {len(seen_titles)} unique page titles/descriptions, canonical and social metadata, Organization/WebSite/Service/Breadcrumb schema, all {len(urls)} indexable sitemap URLs, noindex exclusions and linked digital service pages.')

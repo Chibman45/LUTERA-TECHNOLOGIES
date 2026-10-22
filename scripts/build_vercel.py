@@ -8,10 +8,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from hashlib import sha256
+from public_content import published, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / '_site'
-PUBLIC_FILES = ('index.html', '404.html', 'robots.txt', 'sitemap.xml', 'indexnow.txt')
+PUBLIC_FILES = ('index.html', '404.html', 'robots.txt', 'sitemap.xml', 'indexnow.txt', 'site-revision.json')
 PUBLIC_DIRS = ('assets', 'about', 'contact', 'cookies', 'privacy', 'request-quote',
                'services', 'solutions', 'terms', 'thank-you')
 
@@ -28,6 +30,14 @@ def origin(value):
 def build():
     preview = os.environ.get('VERCEL_ENV') == 'preview'
     configuration = json.loads((ROOT / 'content/site.json').read_text())
+    source = os.environ.get('LUTERA_CONTENT_SOURCE', 'published' if os.environ.get('VERCEL_ENV') == 'production' else 'repository')
+    if source == 'published':
+        configuration, revision = published(json.loads((ROOT / 'content/workspace-source.json').read_text()))
+    elif source == 'repository':
+        validate(configuration)
+        revision = 'repository-' + sha256(json.dumps(configuration, sort_keys=True).encode()).hexdigest()[:16]
+    else:
+        raise ValueError('LUTERA_CONTENT_SOURCE must be published or repository.')
     canonical = os.environ.get('SITE_ORIGIN') or configuration.get('hosting', {}).get('production_origin')
     if not canonical:
         host = os.environ.get('VERCEL_PROJECT_PRODUCTION_URL')
@@ -46,6 +56,8 @@ def build():
             shutil.copytree(ROOT / name, stage / name,
                             ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
         shutil.copy2(ROOT / 'indexnow.txt', stage / 'indexnow.txt')
+        (stage / 'content/site.json').write_text(json.dumps(configuration, ensure_ascii=False))
+        (stage / 'site-revision.json').write_text(json.dumps({'revision': revision}))
         for script in ('build.py', 'check.py', 'check_seo.py'):
             subprocess.run([sys.executable, str(stage / 'scripts' / script)],
                            cwd=stage, env=environment, check=True)

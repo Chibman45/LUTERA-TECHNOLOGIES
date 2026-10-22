@@ -1,9 +1,21 @@
-# Private business workspace — deferred
+# Private business workspace — implementation started
 
-The owner asked for the public website review/agreed-direction implementation to be finished first. This rebrand does not implement or provision the private workspace.
+The public website review was completed first. On 22 October 2026 the owner
+authorised starting the private workspace and selected
+`chimaster010@gmail.com` as the first owner account.
 
-The later scope to retain is a private management interface for company information, services, contact/social details; pro forma/quotation invoices and payment receipts; staff name cards and ID cards; and PDF, Word/document and image exports using the supplied brand assets.
+The application now lives in `apps/workspace`, with its own Next.js build and
+deployment configuration. The Lutera Supabase project has been provisioned for
+its private records. See [the implementation and deployment runbook](private-workspace.md)
+for completed features, test evidence and the account access still required
+before launch.
 
-A hidden URL is not an access control. That phase requires a separate authenticated application and server-side authorisation, appropriate MFA, roles, secure sessions, audit records, backups and controlled document storage. The current static Vercel frontend does not provide these protections or private record storage. No credentials, staff records or financial records should be committed to this public repository. Provider choice, access policies, numbering/tax/payment fields and supported export formats need a concrete implementation brief for that phase.
+A hidden URL supplements approved membership, server-side authentication,
+authenticator MFA and database access policies. The public website remains a
+static Vercel application. No private records or login credentials belong in
+this public repository.
 
-The public site now reads shared company/service content from `content/site.json` and legal copy from `content/legal.json`. These are a future integration foundation; they do not expose a write API or create an administrator account.
+Production public builds can now read the explicitly published public-content
+snapshot. Financial documents, staff records, access rules and activity records
+have no anonymous API privileges. No admin navigation link is added to the
+public site.

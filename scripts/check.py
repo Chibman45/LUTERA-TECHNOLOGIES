@@ -37,7 +37,7 @@ class Check(HTMLParser):
     self.handle_starttag('img',{'src':scene['src'],'srcset':scene['srcset'],'alt':''}.items())
    self.hero_manifest=False
 for f in ROOT.rglob('*.html'):
- if '.git' in f.parts or '_site' in f.parts:continue
+ if {'.git','_site','apps','node_modules','.next'} & set(f.parts):continue
  c=Check(f.relative_to(ROOT));c.feed(f.read_text())
  if c.h1!=1:errors.append(f'{f}: expected one h1')
  if len(c.ids)!=len(set(c.ids)):errors.append(f'{f}: duplicate IDs')

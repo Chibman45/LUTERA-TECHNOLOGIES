@@ -3,7 +3,10 @@
 Vercel is the website host. The approved primary address is
 **https://luteratech.com/**. Use this domain for ownership and sitemap submission.
 GitHub Pages addresses are no longer hosting targets.
-The owner has not yet completed Google Search Console or Bing Webmaster setup.
+The owner has reported completing Google Search Console and Bing Webmaster setup.
+Those confirmations complete the ownership follow-up; this repository does not
+have access to their private indexing or search-performance reports. Keep the
+existing DNS verification records and submit the sitemap after relevant changes.
 
 ## Google Search Console
 
