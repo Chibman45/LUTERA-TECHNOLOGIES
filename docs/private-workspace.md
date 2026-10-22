@@ -372,3 +372,14 @@ locally and on actual Supabase, with fixture users/records rolled back. A real
 parallel REST check admitted exactly 3 of 8 attempts for a test bucket and denied
 5; the test bucket was then removed. No real email or password was changed by
 these tests. Final production HTTP checks follow deployment.
+
+Production verification for the account release: Vercel deployment
+`dpl_8BWJkt851vD7K8JvaTRLhcGZ1Wpc` reached READY for commit `22cfa04`.
+A nonexistent-account login test returned ten 401 responses followed by two
+429 responses with positive Retry-After headers; no email or real account was
+used. Unauthenticated account/profile/photo reads and writes return 401 and
+cross-origin email mutation returns 403, all without caching private content.
+The deployment's runtime error/fatal scan returned no groups. GitHub Private
+workspace checks run `39854864198` passed the application and database jobs.
+The follow-up reservation-lock migration serializes membership creation against
+email reservation, and the database access suite passes after that change.
