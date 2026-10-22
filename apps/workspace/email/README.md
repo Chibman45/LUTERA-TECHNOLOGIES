@@ -12,9 +12,13 @@ body links to the existing monitored `chimaster010@gmail.com` inbox for support.
 These changes do not move or replace the company's existing mailboxes.
 
 The 13 templates, subjects and non-secret Auth configuration are prepared here.
-**They are not yet applied to the hosted Supabase Auth settings.** The connected
-Supabase MCP tool cannot edit Auth URL configuration, SMTP or email templates,
-and no Management API token is provisioned in the execution environment.
+The owner reported completing the hosted Auth URL, SMTP and template setup on
+22 October 2026. Public Auth settings confirm signup is disabled and email
+confirmation is enabled; the owner account has a verified authenticator. The owner also confirmed a fresh account email displays the company sender
+name, logo and official workspace link correctly. Token acceptance and the
+complete recovery flow have not been independently exercised. The connected Supabase MCP tool cannot inspect or
+edit the hosted URL, SMTP or template settings directly, and no Management API
+token is provisioned in the execution environment.
 No SMTP password, API token or account email has been sent by these scripts.
 
 ## 1. Fix the localhost URL
@@ -125,10 +129,15 @@ All records are DNS only, TTL Auto. Existing root MX/SPF records were preserved.
 ## Verification limits
 
 Automated tests use fake auth responses and sample links; they never create
-users, consume real email tokens or send messages. Once the owner saves the
+users, consume real email tokens or send messages. After saving or changing the
 hosted settings, complete a fresh invitation and recovery flow with an approved
 account, inspect its From identity/logo, and verify MFA is still required.
-The provider settings and actual inbox delivery remain unverified until then.
+The owner has confirmed fresh-email delivery, company branding and the official
+link host. The sender/template configuration has not been inspected through the
+Management API, and the complete real-account recovery flow remains an owner
+smoke check. The live account page and public PNG logo
+return HTTP 200. GitHub Private workspace checks run 39837821483 passed both
+application and database jobs for the email implementation commit cb1f9b0.
 
 References: [Supabase email templates](https://supabase.com/docs/guides/auth/auth-email-templates),
 [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp),

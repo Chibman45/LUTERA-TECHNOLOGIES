@@ -23,9 +23,10 @@ Default Vercel deployment protection remains on `.vercel.app` addresses. The
 company subdomain uses application authentication, MFA and database policies. The public project remains **lutera_website**, serving
 `https://luteratech.com`; its published snapshot build and all 32 live checks pass.
 
-The owner's first verified Auth login/MFA setup and the public-site deploy hook
-are still required. The approved owner Auth user now exists with a confirmed email. No authenticated production owner session or workspace-triggered public
-publication is claimed as tested.
+The approved owner Auth user exists with a confirmed email and verified TOTP
+factor. The public-site deploy hook and the real owner workflow smoke check
+remain launch follow-ups. No interactive authenticated owner session or
+workspace-triggered public publication is claimed as tested.
 
 ## Implemented features
 
@@ -284,9 +285,14 @@ before consuming a token; approval, confirmed email and MFA still gate access.
 Invitation passwords are chosen privately. Recovery routes users through their
 existing MFA to My account; a successful password change revokes all sessions.
 
-The hosted Supabase Site URL/allowlist, SMTP sender and templates **have not yet
-been applied**: the connected tool exposes no Auth configuration operation and
-no Management API token is provisioned. The complete, non-secret payload,
+The owner has reported saving the hosted Supabase Site URL/allowlist, SMTP
+sender and templates. Public settings confirm signup disabled and email
+confirmation enabled; the owner has a verified TOTP factor. The connected tool
+exposes no Auth configuration operation and no Management API token is
+provisioned. The owner subsequently confirmed a fresh account email shows the
+company sender, logo and official workspace link correctly. Complete real-account
+token acceptance and recovery remain an owner smoke check.
+The complete, non-secret payload,
 individual templates and a private owner-run configuration utility are in
 [the email setup directory](../apps/workspace/email/README.md). A fresh owner
 invitation/recovery inbox check remains required after those settings are saved.
