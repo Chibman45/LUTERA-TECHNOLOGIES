@@ -1,0 +1,70 @@
+[
+  {
+    "report": "home-desktop.report.json",
+    "url": "https://luteratech.com/",
+    "version": "13.5.0",
+    "scores": {
+      "performance": 100,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "warnings": [],
+    "metrics": {
+      "largest-contentful-paint": "0.4\u00a0s",
+      "total-blocking-time": "0\u00a0ms",
+      "cumulative-layout-shift": "0"
+    }
+  },
+  {
+    "report": "home-mobile.report.json",
+    "url": "https://luteratech.com/",
+    "version": "13.5.0",
+    "scores": {
+      "performance": 93,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "warnings": [],
+    "metrics": {
+      "largest-contentful-paint": "1.8\u00a0s",
+      "total-blocking-time": "260\u00a0ms",
+      "cumulative-layout-shift": "0"
+    }
+  },
+  {
+    "report": "request-quote-mobile.report.json",
+    "url": "https://luteratech.com/request-quote/",
+    "version": "13.5.0",
+    "scores": {
+      "performance": 95,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "warnings": [],
+    "metrics": {
+      "largest-contentful-paint": "1.6\u00a0s",
+      "total-blocking-time": "240\u00a0ms",
+      "cumulative-layout-shift": "0"
+    }
+  },
+  {
+    "report": "solutions-mobile.report.json",
+    "url": "https://luteratech.com/solutions/",
+    "version": "13.5.0",
+    "scores": {
+      "performance": 100,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "warnings": [],
+    "metrics": {
+      "largest-contentful-paint": "1.2\u00a0s",
+      "total-blocking-time": "0\u00a0ms",
+      "cumulative-layout-shift": "0"
+    }
+  }
+]

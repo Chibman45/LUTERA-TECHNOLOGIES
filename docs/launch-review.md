@@ -4,6 +4,12 @@
 Primary domain: **https://luteratech.com/**. GitHub Pages is unpublished; hosting
 and push deployment use Vercel only.
 
+The later [performance and legacy-routing follow-up](performance-follow-up.md)
+is complete: 32 live checks pass; a separate-runner Lighthouse audit measures
+93/100/95 mobile performance for Home/Solutions/Quote and 100 on desktop Home.
+All four score 100 for accessibility, best practices and SEO. The table below
+retains the initial, CPU-constrained audit for historical comparison.
+
 ## Implemented in this release
 
 - Committed the approved production origin in shared content. Canonicals, social
@@ -67,8 +73,9 @@ measured LCP 0.9s, blocking time 220ms and zero layout shift. Treat the mobile
 scores as measurements requiring reproduction on a stable external runner, not
 as a field Core Web Vitals baseline. Consent was not hidden or delayed for the
 audit. No code changes were made to recognise Lighthouse or inflate its scores.
-Performance remains an improvement area pending that reproduction. The audits
-also note about 25 KiB of potential image savings on the homepage.
+The follow-up reproduces the audit on a separate runner and addresses responsive
+image sizing and stylesheet/font discovery. See its report for the current
+measurements and the limits of comparing these two environments.
 
 Before this release the custom domain served pages with the Vercel hostname in
 all 19 canonical/schema/social metadata sets, the sitemap, robots advertisement
