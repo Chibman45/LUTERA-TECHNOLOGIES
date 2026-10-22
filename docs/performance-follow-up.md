@@ -50,3 +50,10 @@ The previous live review scores remain in `launch-review.md`. Fresh deployed
 measurements will be recorded after release; no Lighthouse score improvement is
 assumed from these byte savings. Cookie choices, motion preferences and the
 normal application remain enabled during audits.
+
+The manual **Production Lighthouse review** workflow checks the live domain
+and redirects, then audits Home, Solutions and Quote on mobile and Home on
+desktop using Lighthouse 13.5.0 on a separate GitHub-hosted runner. Scores,
+measurement warnings, metrics and full HTML/JSON reports are saved as a
+14-day Actions artifact. It uses no account secrets, sends no form submissions
+and does not bypass normal consent or motion behaviour.

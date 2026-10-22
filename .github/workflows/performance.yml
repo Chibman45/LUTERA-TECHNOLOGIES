@@ -1,0 +1,67 @@
+name: Production Lighthouse review
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify the production domain and migration redirects
+        run: python3 scripts/review_live.py
+      - name: Install the pinned audit tool
+        run: npm install --global --ignore-scripts lighthouse@13.5.0
+      - name: Review normal production pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          CHROME_PATH="$(command -v google-chrome || command -v chromium)"
+          export CHROME_PATH
+          for page in home solutions request-quote; do
+            route="${page}/"
+            if [ "$page" = home ]; then route=""; fi
+            lighthouse "https://luteratech.com/${route}" \
+              --chrome-flags='--headless=new --no-sandbox --disable-dev-shm-usage' \
+              --output=html --output=json --output-path="reports/${page}-mobile" --quiet
+          done
+          lighthouse https://luteratech.com/ --preset=desktop \
+            --chrome-flags='--headless=new --no-sandbox --disable-dev-shm-usage' \
+            --output=html --output=json --output-path=reports/home-desktop --quiet
+      - name: Record scores and measurement warnings
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, os
+          rows = ['| Report | Performance | Accessibility | Best practices | SEO |',
+                  '| --- | ---: | ---: | ---: | ---: |']
+          summary = []
+          for path in sorted(Path('reports').glob('*.report.json')):
+              report = json.loads(path.read_text())
+              scores = {key: round(report['categories'][key]['score'] * 100)
+                        for key in ('performance', 'accessibility', 'best-practices', 'seo')}
+              rows.append('| ' + path.stem + ' | ' + ' | '.join(map(str, scores.values())) + ' |')
+              summary.append({'report': path.name, 'url': report['finalDisplayedUrl'],
+                              'version': report['lighthouseVersion'], 'scores': scores,
+                              'warnings': report.get('runWarnings', []),
+                              'metrics': {key: report['audits'][key].get('displayValue') for key in
+                                          ('largest-contentful-paint', 'total-blocking-time', 'cumulative-layout-shift')}})
+          Path('reports/summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+          rows += ['', 'Fresh visits with normal cookie choices and motion; no form submissions.',
+                   'Lab measurements do not establish field Core Web Vitals or search rankings.']
+          for item in summary:
+              for warning in item['warnings']:
+                  rows.append(f"\n{item['report']}: {warning}")
+          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('\n'.join(rows) + '\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-production-${{ github.run_id }}
+          path: reports/
+          retention-days: 14
