@@ -76,11 +76,12 @@ and the two form return URLs. Alias quote-path probes also served directly
 instead of permanently redirecting to the primary origin. The live checker
 detects those incomplete-cutover cases.
 
-The extra `/LUTERA-TECHNOLOGIES/...` migration-prefix rules are present in
-`vercel.json`, but direct live probes still returned 404 during this review.
-Use the verified root paths for all published links. Those convenience rules
-need a Vercel routing/settings investigation before being advertised as working;
-they cannot redirect requests arriving at GitHub's retired hostname.
+During this initial review, the extra `/LUTERA-TECHNOLOGIES/...` migration-prefix
+rules returned 404 for slash-terminated page paths. The subsequent
+[performance/routing follow-up](performance-follow-up.md) identifies Vercel's
+strict trailing-slash matching, fixes those rules and verifies all six live
+legacy-prefix cases. Redirects cannot handle requests arriving at GitHub's
+retired hostname.
 
 ## Remaining owner/provider items
 

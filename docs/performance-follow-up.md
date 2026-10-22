@@ -11,6 +11,8 @@
 - Combined the three stylesheets into one generated CSS file, retaining their
   original cascade order and relative font URLs. A hash of the combined content
   names the file, so later style changes cannot reuse a stale CSS URL.
+- JavaScript query versions also come from the script contents, so caches
+  revalidate an updated equipment explorer instead of keeping a manual version.
 - Preloaded Playfair Italic on the homepage, removing the stylesheet-to-font
   discovery delay measured in the previous audit. Other pages do not preload
   an unused accent font.
@@ -40,6 +42,9 @@ less image data respectively. These are image-file totals, not reductions in
 the entire page's transfer size. Gzip of the combined CSS measures 10,407 bytes
 versus 11,689 bytes for three separately compressed stylesheets, with two fewer
 stylesheet requests. Actual CDN compression and cache behaviour may differ.
+
+All 32 live HTTP checks now pass, including the six legacy-prefix cases that
+previously failed. The code deployment reported completed in Vercel.
 
 The previous live review scores remain in `launch-review.md`. Fresh deployed
 measurements will be recorded after release; no Lighthouse score improvement is
