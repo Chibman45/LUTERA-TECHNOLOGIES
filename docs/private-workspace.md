@@ -296,3 +296,79 @@ The complete, non-secret payload,
 individual templates and a private owner-run configuration utility are in
 [the email setup directory](../apps/workspace/email/README.md). A fresh owner
 invitation/recovery inbox check remains required after those settings are saved.
+
+## Self-service accounts and authentication limits — 22 October update
+
+My account now includes a private full name, contact phone and profile photo;
+confirmed email changes; password requirements and visibility controls; and
+verified authenticator status with enrollment of up to three authenticator
+apps. MFA remains mandatory, and removing the last factor is not exposed.
+A phone number is contact information, not a verified SMS factor.
+
+Profiles and normalized JPEG avatars are accessible only by their own approved,
+MFA-verified account. Photos accept JPEG/PNG/WebP below 1 MB and 16 megapixels;
+metadata is stripped and the output is bounded to 512 pixels. Concurrent profile
+saves check versions and rejected uploads are removed. Account data does not
+change the company's public contact information or staff-card records.
+The manual business-records backup does not include these personal account
+profiles/photos; include their table/bucket in full database/storage backups.
+
+Email changes reserve the new address for the current immutable Auth user ID.
+The existing address stays approved until Supabase confirms the change. The
+claim function then moves that same membership to the verified address,
+preserving its role and active status. Other members cannot claim or be granted
+a reserved address. A failed provider request releases its reservation only if
+GoTrue has not accepted the change. No account role comes from user metadata.
+
+All password inputs, including login, invitation, account and encrypted-backup
+fields, have accessible show/hide controls. New account passwords require
+12–128 characters, uppercase/lowercase letters, a number and a symbol, with
+live requirement checks and identical server-side validation. Existing passwords
+can still be used to sign in; the new composition policy applies when setting
+or changing a password. Backup passwords retain their separate 16-character
+minimum. Successful account password changes revoke all account sessions and
+show a sign-in confirmation. Error/success notices, pending-email states and
+429 retry countdowns are explicit and announced to assistive technology.
+
+Authentication requests use an atomic shared Postgres limiter, rather than
+process memory. A Production-only sensitive `AUTH_RATE_SECRET` authenticates the
+narrow limiter RPC. Only its SHA-256 digest is stored in the inaccessible private
+configuration table. Rate buckets contain HMAC-derived keys, counts and expiry,
+not raw emails or IP addresses. The RPC's definer helper is in the unexposed
+private schema with fixed search_path; private tables have no client grants and
+explicit deny policies. Expired buckets are cleaned up. A failed rate backend
+fails closed with 503; exceeding a quota returns 429 and Retry-After.
+
+Application limits (all attempts, including successes):
+
+| Request | Per subject | Per IP |
+| --- | --- | --- |
+| Password login | 10 / 15 minutes per email | 30 / 15 minutes |
+| Authenticator enrollment/verification | 10 / 5 minutes per account and action | 20 / 5 minutes per action |
+| Email-token confirmation | 5 / 15 minutes per token | 20 / 15 minutes |
+| Password/email changes | 5 / 15 minutes per account and action | 20 / 15 minutes per action |
+
+All protected actions also share an IP cap of 60 / 15 minutes. Production trusts
+Vercel's edge-supplied IP headers, not client-supplied Cloudflare/Forwarded
+headers. Keep the workspace's current DNS-only routing unless a trusted proxy
+integration is explicitly configured. These application limits supplement
+Supabase's own provider limits; direct Auth API policy remains controlled by
+Supabase. The provider's leaked-password protection warning remains an owner
+setting and was not changed by this implementation.
+
+`AUTH_RATE_SECRET` is already configured for the production workspace. For a
+replacement installation, generate 32 random bytes as 64 hex characters, store
+them as this server-only sensitive variable, and store their SHA-256 hex digest
+in `private.work_rate_config` (id 1) using database-owner tooling. Do not place
+that secret in Git, browser variables, logs or backups shared through chat.
+Preview environments continue to have no production credential configuration.
+
+Verification: 18 unit/export tests and a production build pass. Account browser
+fixtures cover profile/photo/email updates, additional MFA, password validation,
+visibility controls, a successful password-change notification, and login 429
+countdowns at 390/768/1280 pixels with no reported axe WCAG A/AA violations.
+The existing browser and email suites also pass. New database tests pass both
+locally and on actual Supabase, with fixture users/records rolled back. A real
+parallel REST check admitted exactly 3 of 8 attempts for a test bucket and denied
+5; the test bucket was then removed. No real email or password was changed by
+these tests. Final production HTTP checks follow deployment.

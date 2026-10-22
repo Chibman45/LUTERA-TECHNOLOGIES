@@ -20,6 +20,11 @@ import {
 import { financialExport, cardExport } from "@/lib/exports";
 import { encryptBackup } from "@/lib/backup";
 import { completeEmailAction, EmailActionError } from "@/lib/auth-email";
+import { emailActionSchema } from "@/lib/auth-email";
+import { enforceAuthLimit, AuthLimitError } from "@/lib/rate-limit";
+import { newPasswordSchema } from "@/lib/password";
+import { profileSchema, emailChangeSchema } from "@/lib/account-contracts";
+import { normalizeAvatar } from "@/lib/avatar";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -31,6 +36,30 @@ class Failure extends Error {
   ) {
     super(message);
   }
+}
+function authFailure(
+  error: { code?: string; status?: number },
+  fallback: string,
+  status = 400,
+) {
+  if (error.status === 429 || error.code?.startsWith("over_"))
+    return new AuthLimitError(
+      "Too many attempts. Please wait a minute before retrying.",
+      429,
+      60,
+    );
+  const messages: Record<string, string> = {
+    email_not_confirmed:
+      "Confirm your email address using the latest company email before signing in.",
+    same_password: "Choose a password different from your current password.",
+    weak_password:
+      "This password does not meet the account security policy. Follow all password requirements.",
+    reauthentication_needed:
+      "For your security, sign out and sign in again before changing this setting.",
+    mfa_verification_failed:
+      "That authenticator code is invalid or expired. Enter the latest six-digit code.",
+  };
+  return new Failure(messages[error.code || ""] || fallback, status);
 }
 const ok = (data: unknown) =>
   Response.json(data, { headers: { "Cache-Control": "private, no-store" } });
@@ -56,6 +85,9 @@ const check = <T>(result: {
       "Owner access",
       "Export permission",
       "Configure company",
+      "Choose a different email",
+      "Finish the pending email",
+      "This email cannot be used",
     ];
     throw new Failure(
       safe.some((prefix) => message.startsWith(prefix))
@@ -70,6 +102,9 @@ async function identity() {
   const db = await database();
   const { data, error } = await db.auth.getUser();
   if (error || !data.user) throw new Failure("Sign in to continue", 401);
+  // Reconcile an explicitly reserved, provider-confirmed email change before
+  // reading membership. Roles and active status are never supplied by a user.
+  check(await db.rpc("work_claim_membership"));
   const member = check(
     await db
       .from("work_members")
@@ -252,6 +287,53 @@ export async function GET(
         publishing_connected: Boolean(process.env.PUBLIC_SITE_DEPLOY_HOOK),
       });
     }
+    if (action === "account" || action === "account/avatar") {
+      const { db, user, role } = await authorize();
+      const profile = check(
+        await db
+          .from("work_profiles")
+          .select("full_name,phone,avatar_path,version")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      );
+      if (action === "account/avatar") {
+        if (!profile?.avatar_path?.startsWith(user.id + "/"))
+          throw new Failure("Profile photo unavailable", 404);
+        const file = check(
+          await db.storage.from("work-avatars").download(profile.avatar_path),
+        );
+        return new Response(await file.arrayBuffer(), {
+          headers: {
+            "Content-Type": "image/jpeg",
+            "Cache-Control": "private, no-store",
+          },
+        });
+      }
+      const pending = check(
+        await db
+          .from("work_email_changes")
+          .select("new_email")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      );
+      const factors = check(await db.auth.mfa.listFactors());
+      return ok({
+        email: user.email,
+        role,
+        pending_email: pending?.new_email || null,
+        profile: {
+          full_name: profile?.full_name || "",
+          phone: profile?.phone || "",
+          avatar_url: profile?.avatar_path
+            ? `/api/account/avatar?v=${profile.version}`
+            : null,
+          version: profile?.version || 0,
+        },
+        factors: factors.totp
+          .filter((f) => f.status === "verified")
+          .map((f) => ({ id: f.id, name: f.friendly_name || "Authenticator" })),
+      });
+    }
     if (action.startsWith("photo/")) {
       const { db } = await authorize("staff");
       const file = action.slice(6);
@@ -286,7 +368,10 @@ export async function POST(
       action = (await context.params).action.join("/");
     if (action === "auth/email-confirm") {
       try {
-        const result = await completeEmailAction(await database(), input);
+        const body = emailActionSchema.parse(input),
+          db = await database();
+        await enforceAuthLimit(db, request, action, body.token_hash);
+        const result = await completeEmailAction(db, body);
         if (result.next === "email_pending") return ok(result);
         const entry = process.env.WORKSPACE_ENTRY || "";
         if (!/^[A-Za-z0-9_-]{32,128}$/.test(entry))
@@ -303,14 +388,19 @@ export async function POST(
     }
     if (action === "auth/signin") {
       const body = z
-        .object({ email: z.email(), password: z.string().min(1).max(256) })
+        .object({
+          email: z.string().trim().toLowerCase().pipe(z.email()),
+          password: z.string().min(1).max(256),
+        })
         .strict()
         .parse(input);
       const db = await database();
+      await enforceAuthLimit(db, request, action, body.email);
       const result = await db.auth.signInWithPassword(body);
       if (result.error)
-        throw new Failure(
-          "Sign-in failed. Check your details or wait before retrying.",
+        throw authFailure(
+          result.error,
+          "Sign-in failed. Check your email and password.",
           401,
         );
       const claim = await db.rpc("work_claim_membership");
@@ -331,7 +421,8 @@ export async function POST(
       return ok({ success: true });
     }
     if (action === "mfa/enroll") {
-      const { db } = await identity();
+      const { db, user } = await identity();
+      await enforceAuthLimit(db, request, action, user.id);
       const factors = check(await db.auth.mfa.listFactors());
       if (factors.totp.some((f) => f.status === "verified"))
         throw new Failure("Verify your existing authenticator");
@@ -353,24 +444,79 @@ export async function POST(
       });
     }
     if (action === "mfa/verify") {
-      const { db } = await identity();
+      const { db, user } = await identity();
       const body = z
         .object({ factorId: uuid, code: z.string().regex(/^[0-9]{6}$/) })
         .strict()
         .parse(input);
-      check(await db.auth.mfa.challengeAndVerify(body));
+      await enforceAuthLimit(db, request, action, user.id);
+      const verified = await db.auth.mfa.challengeAndVerify(body);
+      if (verified.error)
+        throw authFailure(
+          verified.error,
+          "That authenticator code is invalid or expired. Enter the latest six-digit code.",
+        );
+      return ok({ success: true });
+    }
+    if (action === "mfa/add") {
+      const { db, user } = await authorize();
+      const body = z
+        .object({ name: z.string().trim().min(1).max(60) })
+        .strict()
+        .parse(input);
+      await enforceAuthLimit(db, request, action, user.id);
+      const factors = check(await db.auth.mfa.listFactors());
+      if (factors.totp.filter((f) => f.status === "verified").length >= 3)
+        throw new Failure(
+          "Up to three authenticators can be enrolled. Contact the owner to recover or replace a lost device.",
+        );
+      for (const factor of factors.all.filter(
+        (f) => f.factor_type === "totp" && f.status === "unverified",
+      ))
+        check(await db.auth.mfa.unenroll({ factorId: factor.id }));
+      const result = await db.auth.mfa.enroll({
+        factorType: "totp",
+        friendlyName: body.name,
+        issuer: "Lutera Technology Ltd",
+      });
+      if (result.error)
+        throw authFailure(
+          result.error,
+          "Authenticator setup could not be started. Try a different device name.",
+        );
+      return ok({
+        id: result.data.id,
+        qr: result.data.totp.qr_code,
+        secret: result.data.totp.secret,
+      });
+    }
+    if (action === "mfa/confirm-add") {
+      const { db, user } = await authorize();
+      const body = z
+        .object({ factorId: uuid, code: z.string().regex(/^[0-9]{6}$/) })
+        .strict()
+        .parse(input);
+      await enforceAuthLimit(db, request, action, user.id);
+      const result = await db.auth.mfa.challengeAndVerify(body);
+      if (result.error)
+        throw authFailure(
+          result.error,
+          "That code is invalid or expired. Enter the latest code from the new authenticator.",
+        );
       return ok({ success: true });
     }
     if (action === "auth/password") {
-      const { db } = await authorize();
+      const { db, user } = await authorize();
       const body = z
-        .object({ password: z.string().min(12).max(128) })
+        .object({ password: newPasswordSchema })
         .strict()
         .parse(input);
+      await enforceAuthLimit(db, request, action, user.id);
       const updated = await db.auth.updateUser({ password: body.password });
       if (updated.error)
-        throw new Failure(
-          "Password update failed. Use a new password that meets your company’s provider policy.",
+        throw authFailure(
+          updated.error,
+          "Password update failed. Use a different password that meets all requirements.",
         );
       const result = await db.auth.signOut({ scope: "global" });
       if (result.error)
@@ -379,6 +525,98 @@ export async function POST(
           503,
         );
       return ok({ success: true });
+    }
+    if (action === "account/email") {
+      const { db, user } = await authorize();
+      const body = emailChangeSchema.parse(input);
+      await enforceAuthLimit(db, request, action, user.id);
+      const created = check(
+        await db.rpc("work_prepare_email_change", { new_address: body.email }),
+      );
+      const result = await db.auth.updateUser(
+        { email: body.email },
+        { emailRedirectTo: workspaceOrigin() + "/auth/confirm" },
+      );
+      if (result.error) {
+        if (created)
+          await db.rpc("work_abort_email_change", { new_address: body.email });
+        throw authFailure(
+          result.error,
+          "Email change could not be sent. Check the address and retry.",
+        );
+      }
+      return ok({
+        success: true,
+        message:
+          "Confirmation requested. Check both your current and new email inboxes. Your current address stays active until confirmation is complete.",
+      });
+    }
+    if (action === "account/profile") {
+      const { db, user } = await authorize();
+      const body = profileSchema.parse(input);
+      const current = check(
+        await db
+          .from("work_profiles")
+          .select("version,avatar_path")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      );
+      if ((current?.version || 0) !== body.version)
+        throw new Failure(
+          "Your profile changed elsewhere. Reload it before saving.",
+          409,
+        );
+      let path = body.remove_photo ? "" : current?.avatar_path || "";
+      let uploaded = "";
+      if (body.photo) {
+        let image: Buffer;
+        try {
+          image = await normalizeAvatar(body.photo);
+        } catch (error) {
+          throw new Failure((error as Error).message);
+        }
+        uploaded = user.id + "/" + randomUUID() + ".jpg";
+        check(
+          await db.storage
+            .from("work-avatars")
+            .upload(uploaded, image, {
+              contentType: "image/jpeg",
+              upsert: false,
+            }),
+        );
+        path = uploaded;
+      }
+      try {
+        const payload = {
+          user_id: user.id,
+          full_name: body.full_name,
+          phone: body.phone,
+          avatar_path: path,
+        };
+        const result = await (
+          current
+            ? db
+                .from("work_profiles")
+                .update(payload)
+                .eq("user_id", user.id)
+                .eq("version", body.version)
+            : db.from("work_profiles").insert(payload)
+        )
+          .select("version")
+          .maybeSingle();
+        if (result.error?.code === "23505" || (!result.error && !result.data))
+          throw new Failure(
+            "Your profile changed elsewhere. Reload it before saving.",
+            409,
+          );
+        check(result);
+      } catch (error) {
+        if (uploaded) await db.storage.from("work-avatars").remove([uploaded]);
+        throw error;
+      }
+      if (current?.avatar_path && current.avatar_path !== path)
+        await db.storage.from("work-avatars").remove([current.avatar_path]);
+      return ok({ success: true, message: "Your profile has been updated." });
     }
     if (action === "records") {
       const body = z
@@ -819,6 +1057,19 @@ export async function POST(
   }
 }
 function fail(error: unknown) {
+  if (error instanceof AuthLimitError)
+    return Response.json(
+      { error: error.message },
+      {
+        status: error.status,
+        headers: {
+          "Cache-Control": "private, no-store",
+          ...(error.retryAfter
+            ? { "Retry-After": String(error.retryAfter) }
+            : {}),
+        },
+      },
+    );
   if (error instanceof z.ZodError)
     return Response.json(
       {

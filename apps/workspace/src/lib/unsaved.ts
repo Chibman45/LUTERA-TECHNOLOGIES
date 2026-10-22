@@ -1,17 +1,25 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 export function useUnsavedChanges(dirty: boolean) {
+  const current = useRef(dirty);
+  current.current = dirty;
   useEffect(() => {
-    if (!dirty) return;
-    const navigation = (event: Event) => event.preventDefault();
-    const unload = (event: BeforeUnloadEvent) => event.preventDefault();
+    const navigation = (event: Event) => {
+      if (current.current) event.preventDefault();
+    };
+    const unload = (event: BeforeUnloadEvent) => {
+      if (current.current) event.preventDefault();
+    };
     window.addEventListener("lutera-before-navigation", navigation);
     window.addEventListener("beforeunload", unload);
     return () => {
       window.removeEventListener("lutera-before-navigation", navigation);
       window.removeEventListener("beforeunload", unload);
     };
-  }, [dirty]);
+  }, []);
+  return () => {
+    current.current = false;
+  };
 }
 export function mayLeave() {
   return (

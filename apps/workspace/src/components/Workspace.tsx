@@ -12,6 +12,11 @@ import {
 import Documents from "./documents";
 import StaffCards from "./staff";
 import ContentEditor from "./content";
+import Account from "./Account";
+import PasswordInput from "./PasswordInput";
+import { api, saveFile } from "@/lib/client";
+export { api, saveFile } from "@/lib/client";
+import { useCooldown } from "@/lib/cooldown";
 import { mayLeave, useUnsavedChanges } from "@/lib/unsaved";
 
 export type Session = {
@@ -37,41 +42,6 @@ export type State = {
   publications: { id: string; status: string; created_at: string }[];
   publishing_connected: boolean;
 };
-export async function api<T = unknown>(
-  action: string,
-  body?: unknown,
-): Promise<T> {
-  const response = await fetch(`/api/${action}`, {
-    method: body === undefined ? "GET" : "POST",
-    headers: body === undefined ? {} : { "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-    cache: "no-store",
-  });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error || "The request failed");
-  return result;
-}
-export async function saveFile(action: string, body: unknown) {
-  const response = await fetch(`/api/${action}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) {
-    const value = await response.json();
-    throw new Error(value.error || "Export failed");
-  }
-  const blob = await response.blob(),
-    url = URL.createObjectURL(blob),
-    a = document.createElement("a");
-  a.href = url;
-  a.download =
-    response.headers
-      .get("content-disposition")
-      ?.match(/filename="([^"]+)"/)?.[1] || "lutera-export";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 export function Field({
   label,
   children,
@@ -380,6 +350,7 @@ export default function Workspace() {
   );
 }
 function Login({ onSuccess }: { onSuccess: () => Promise<void> }) {
+  const cooldown = useCooldown();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -394,6 +365,7 @@ function Login({ onSuccess }: { onSuccess: () => Promise<void> }) {
       });
       await onSuccess();
     } catch (e) {
+      cooldown.handle(e);
       setError((e as Error).message);
     } finally {
       setBusy(false);
@@ -423,6 +395,13 @@ function Login({ onSuccess }: { onSuccess: () => Promise<void> }) {
         <p className="eyebrow">Approved accounts only</p>
         <h2>Welcome back.</h2>
         <p>Sign in, then verify with your authenticator app.</p>
+        {typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).get("notice") ===
+            "password-changed" && (
+            <p className="notice" role="status">
+              Your password has been updated. Sign in with your new password.
+            </p>
+          )}
         <form onSubmit={submit}>
           <Field label="Work email">
             <input
@@ -433,22 +412,24 @@ function Login({ onSuccess }: { onSuccess: () => Promise<void> }) {
               maxLength={254}
             />
           </Field>
-          <Field label="Password">
-            <input
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              maxLength={256}
-            />
-          </Field>
+          <PasswordInput
+            label="Password"
+            name="password"
+            autoComplete="current-password"
+            required
+            maxLength={256}
+          />
           {error && (
             <p className="error" role="alert">
               {error}
             </p>
           )}
-          <button disabled={busy}>
-            {busy ? "Signing in…" : "Continue securely ↗"}
+          <button disabled={busy || cooldown.seconds > 0}>
+            {cooldown.seconds > 0
+              ? `Try again in ${cooldown.seconds}s`
+              : busy
+                ? "Signing in…"
+                : "Continue securely ↗"}
           </button>
         </form>
         <p className="muted">
@@ -468,6 +449,7 @@ function MFA({
   onSuccess: () => Promise<void>;
   onSignout: () => Promise<void>;
 }) {
+  const cooldown = useCooldown();
   const [enrollment, setEnrollment] = useState<{
       id: string;
       qr: string;
@@ -481,6 +463,7 @@ function MFA({
     try {
       setEnrollment(await api("mfa/enroll", {}));
     } catch (e) {
+      cooldown.handle(e);
       setError((e as Error).message);
     } finally {
       setBusy(false);
@@ -499,6 +482,7 @@ function MFA({
       setEnrollment(null);
       await onSuccess();
     } catch (e) {
+      cooldown.handle(e);
       setError((e as Error).message);
     } finally {
       setBusy(false);
@@ -514,13 +498,18 @@ function MFA({
           alt="Lutera"
         />
         <h1>One more check.</h1>
+        {cooldown.seconds > 0 && (
+          <p className="notice" role="status">
+            Try again in {cooldown.seconds} seconds.
+          </p>
+        )}
         <p>
           {session.factors.length
             ? "Enter the six-digit code from your authenticator app."
             : "Set up an authenticator app before opening private records."}
         </p>
         {!session.factors.length && !enrollment && (
-          <button onClick={enroll} disabled={busy}>
+          <button onClick={enroll} disabled={busy || cooldown.seconds > 0}>
             Set up authenticator
           </button>
         )}
@@ -571,7 +560,7 @@ function MFA({
                 autoFocus
               />
             </Field>
-            <button disabled={busy}>
+            <button disabled={busy || cooldown.seconds > 0}>
               {busy ? "Verifying…" : "Verify and open workspace"}
             </button>
           </form>
@@ -805,26 +794,22 @@ function Backups() {
         policy.
       </p>
       <div className="form-grid">
-        <Field label="Backup password (at least 16 characters)">
-          <input
-            type="password"
-            name="password"
-            minLength={16}
-            maxLength={256}
-            required
-            autoComplete="new-password"
-          />
-        </Field>
-        <Field label="Confirm backup password">
-          <input
-            type="password"
-            name="confirmation"
-            minLength={16}
-            maxLength={256}
-            required
-            autoComplete="new-password"
-          />
-        </Field>
+        <PasswordInput
+          label="Backup password (at least 16 characters)"
+          name="password"
+          minLength={16}
+          maxLength={256}
+          required
+          autoComplete="new-password"
+        />
+        <PasswordInput
+          label="Confirm backup password"
+          name="confirmation"
+          minLength={16}
+          maxLength={256}
+          required
+          autoComplete="new-password"
+        />
       </div>
       <button disabled={busy}>
         {busy ? "Encrypting backup…" : "Download encrypted backup"}
@@ -836,72 +821,5 @@ function Backups() {
         Automatic off-site backups require a company storage destination.
       </p>
     </form>
-  );
-}
-function Account({ session }: { session: Session }) {
-  const [busy, setBusy] = useState(false),
-    [message, setMessage] = useState("");
-  return (
-    <section className="panel">
-      <h2>Your account</h2>
-      <p>
-        {session.email} · {session.role}. Authenticator verification is required
-        for every private area.
-      </p>
-      <form
-        onSubmit={async (event) => {
-          event.preventDefault();
-          const form = event.currentTarget,
-            values = new FormData(form);
-          if (values.get("password") !== values.get("confirmation")) {
-            setMessage("Passwords must match");
-            return;
-          }
-          setBusy(true);
-          setMessage("");
-          try {
-            await api("auth/password", { password: values.get("password") });
-            form.reset();
-            window.location.reload();
-          } catch (error) {
-            setMessage((error as Error).message);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <h3>Change your password</h3>
-        <p>
-          Use a unique password of at least 12 characters. A successful change
-          signs out this account on every device.
-        </p>
-        <div className="form-grid">
-          <Field label="New password">
-            <input
-              name="password"
-              type="password"
-              required
-              minLength={12}
-              maxLength={128}
-              autoComplete="new-password"
-            />
-          </Field>
-          <Field label="Confirm new password">
-            <input
-              name="confirmation"
-              type="password"
-              required
-              minLength={12}
-              maxLength={128}
-              autoComplete="new-password"
-            />
-          </Field>
-        </div>
-        <button disabled={busy}>
-          {busy ? "Updating…" : "Change password & sign out"}
-        </button>
-        {message && <Notice>{message}</Notice>}
-      </form>
-    </section>
   );
 }

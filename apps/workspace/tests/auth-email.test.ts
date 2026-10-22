@@ -39,7 +39,7 @@ function client(
         return { error: null };
       },
       updateUser: async (input: { password: string }) => {
-        assert.equal(input.password, "a-private-fixture-password");
+        assert.equal(input.password, "A-private-Fixture-12!");
         calls.push("password");
         return { error: options.updateError ? {} : null };
       },
@@ -89,8 +89,8 @@ test("invitation saves a password only after current verified user and approved 
     await completeEmailAction(db.value, {
       token_hash,
       type: "invite",
-      password: "a-private-fixture-password",
-      confirmation: "a-private-fixture-password",
+      password: "A-private-Fixture-12!",
+      confirmation: "A-private-Fixture-12!",
     }),
     { next: "workspace" },
   );
@@ -100,8 +100,8 @@ test("invitation saves a password only after current verified user and approved 
     completeEmailAction(denied.value, {
       token_hash,
       type: "invite",
-      password: "a-private-fixture-password",
-      confirmation: "a-private-fixture-password",
+      password: "A-private-Fixture-12!",
+      confirmation: "A-private-Fixture-12!",
     }),
     /not approved/,
   );
@@ -119,8 +119,8 @@ test("unconfirmed users and failed password saves clear the local session", asyn
     completeEmailAction(failed.value, {
       token_hash,
       type: "invite",
-      password: "a-private-fixture-password",
-      confirmation: "a-private-fixture-password",
+      password: "A-private-Fixture-12!",
+      confirmation: "A-private-Fixture-12!",
     }),
     /could not be saved/,
   );

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { passwordIssues } from "./password";
 
 export const emailActionTypes = [
   "invite",
@@ -22,12 +23,13 @@ export const emailActionSchema = z
     if (
       value.type === "invite" &&
       (!value.password ||
-        value.password.length < 12 ||
+        passwordIssues(value.password).length > 0 ||
         value.password !== value.confirmation)
     ) {
       context.addIssue({
         code: "custom",
-        message: "Use matching passwords of at least 12 characters",
+        message:
+          "Use matching passwords with 12–128 characters, uppercase and lowercase letters, a number and a symbol",
         path: ["password"],
       });
     }

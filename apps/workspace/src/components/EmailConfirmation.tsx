@@ -1,4 +1,8 @@
 "use client";
+import PasswordInput from "./PasswordInput";
+import { api } from "@/lib/client";
+import { useCooldown } from "@/lib/cooldown";
+import { passwordIssues } from "@/lib/password";
 import { useEffect, useState } from "react";
 import type { emailActionTypes } from "@/lib/auth-email";
 type Action = (typeof emailActionTypes)[number];
@@ -9,6 +13,7 @@ export default function EmailConfirmation({
   token: string;
   type: Action | null;
 }) {
+  const cooldown = useCooldown();
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const [completed, setCompleted] = useState(false);
@@ -69,6 +74,9 @@ export default function EmailConfirmation({
                   ? "Continue to verify your existing authenticator, then choose a new password in My account. Email recovery does not remove your authenticator."
                   : "Continue to confirm this account action. Only approved accounts can open the workspace."}
             </p>
+            {cooldown.seconds > 0 && (
+              <p role="status">Try again in {cooldown.seconds} seconds.</p>
+            )}
             <form
               onSubmit={async (event) => {
                 event.preventDefault();
@@ -81,13 +89,21 @@ export default function EmailConfirmation({
                   setMessage("Passwords must match.");
                   return;
                 }
+                if (
+                  invite &&
+                  passwordIssues(String(values.get("password") || "")).length
+                ) {
+                  setMessage(
+                    "Follow all password requirements before continuing.",
+                  );
+                  return;
+                }
                 setBusy(true);
                 setMessage("");
                 try {
-                  const response = await fetch("/api/auth/email-confirm", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
+                  const data = await api<{ next: string; redirect?: string }>(
+                    "auth/email-confirm",
+                    {
                       token_hash: token,
                       type,
                       ...(invite
@@ -96,13 +112,8 @@ export default function EmailConfirmation({
                             confirmation: values.get("confirmation"),
                           }
                         : {}),
-                    }),
-                  });
-                  const data = await response.json();
-                  if (!response.ok)
-                    throw new Error(
-                      data.error || "This link could not be confirmed.",
-                    );
+                    },
+                  );
                   form.reset();
                   if (data.next === "email_pending") {
                     setCompleted(true);
@@ -122,6 +133,7 @@ export default function EmailConfirmation({
                     );
                   window.location.replace(data.redirect);
                 } catch (error) {
+                  cooldown.handle(error);
                   setMessage((error as Error).message);
                 } finally {
                   setBusy(false);
@@ -130,28 +142,23 @@ export default function EmailConfirmation({
             >
               {invite && (
                 <>
-                  <label className="field">
-                    <span>New password</span>
-                    <input
-                      name="password"
-                      type="password"
-                      minLength={12}
-                      maxLength={128}
-                      autoComplete="new-password"
-                      required
-                    />
-                  </label>
-                  <label className="field">
-                    <span>Confirm password</span>
-                    <input
-                      name="confirmation"
-                      type="password"
-                      minLength={12}
-                      maxLength={128}
-                      autoComplete="new-password"
-                      required
-                    />
-                  </label>
+                  <PasswordInput
+                    label="New password"
+                    name="password"
+                    minLength={12}
+                    maxLength={128}
+                    autoComplete="new-password"
+                    required
+                    requirements
+                  />
+                  <PasswordInput
+                    label="Confirm password"
+                    name="confirmation"
+                    minLength={12}
+                    maxLength={128}
+                    autoComplete="new-password"
+                    required
+                  />
                 </>
               )}
               {message && (
@@ -159,7 +166,7 @@ export default function EmailConfirmation({
                   {message}
                 </p>
               )}
-              <button disabled={busy}>
+              <button disabled={busy || cooldown.seconds > 0}>
                 {busy
                   ? "Confirming…"
                   : invite

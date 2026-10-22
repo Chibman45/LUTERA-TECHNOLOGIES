@@ -59,6 +59,7 @@ jobs:
           done
           python tests/browser.py
           python tests/browser_email.py
+          python tests/browser_account.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

@@ -22,12 +22,12 @@ with sync_playwright() as p:
  page.get_by_role('heading',name='Welcome to Lutera.').wait_for()
  page.wait_for_function('!location.search')
  assert not posts,posts
- page.get_by_label('New password',exact=True).fill('sample-password-12')
+ page.get_by_label('New password',exact=True).fill('Sample-password-12!')
  page.get_by_label('Confirm password',exact=True).fill('different-password')
  page.get_by_role('button',name='Accept invitation').click()
  page.get_by_role('alert').get_by_text('Passwords must match.').wait_for()
  assert not posts,posts
- page.get_by_label('Confirm password',exact=True).fill('sample-password-12')
+ page.get_by_label('Confirm password',exact=True).fill('Sample-password-12!')
  def invalid(route):route.fulfill(status=400,content_type='application/json',body=json.dumps({'error':'This link has expired or has already been used.'}))
  c.route('**/api/auth/email-confirm',invalid)
  page.get_by_role('button',name='Accept invitation').click()
