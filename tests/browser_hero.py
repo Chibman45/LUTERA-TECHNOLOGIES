@@ -4,7 +4,7 @@ from http.server import SimpleHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 import json,os,shutil,threading
 from playwright.sync_api import sync_playwright
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(os.environ.get('LUTERA_TEST_DIR',Path(__file__).resolve().parents[1])).resolve()
 class Handler(SimpleHTTPRequestHandler):
  def translate_path(self,path):return super().translate_path(path.removeprefix('/LUTERA-TECHNOLOGIES'))
  def log_message(self,*args):pass
@@ -12,7 +12,7 @@ server=None;base=os.environ.get('LUTERA_TEST_URL')
 if not base:
  server=ThreadingHTTPServer(('127.0.0.1',0),partial(Handler,directory=str(ROOT)))
  threading.Thread(target=server.serve_forever,daemon=True).start()
- base=f'http://127.0.0.1:{server.server_port}/LUTERA-TECHNOLOGIES/'
+ base=f'http://127.0.0.1:{server.server_port}'+os.environ.get('LUTERA_TEST_BASE','/LUTERA-TECHNOLOGIES/')
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path=shutil.which('chromium') or None,args=['--no-sandbox'])
  c=b.new_context(viewport={'width':1191,'height':800});q=c.new_page();errors=[]

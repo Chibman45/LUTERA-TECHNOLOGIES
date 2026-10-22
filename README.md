@@ -2,7 +2,15 @@
 
 Public, database-free website for Lutera’s eight services: IT procurement, hardware supply, technology consulting, installation and support (including computer labs), AI and automation, software development, data analytics, and cloud integration.
 
-Live review site: **https://chibman45.github.io/LUTERA-TECHNOLOGIES/**
+Repository: **https://github.com/luteratech/LUTERA-TECHNOLOGIES**
+
+GitHub Pages review address: **https://luteratech.github.io/LUTERA-TECHNOLOGIES/**
+
+The original repository has been transferred from `Chibman45` to `luteratech`,
+retaining its history. Vercel deployment configuration is prepared in
+`vercel.json`. See [Vercel setup](docs/vercel-deployment.md) for import steps,
+build settings and verification. No Vercel production release or DNS cutover
+has been performed.
 
 The owner has deferred connecting `luteratech.com` and `luteratech.com.ng` until review is complete. No DNS, registrar or custom-domain settings are changed by this rebrand. The future private business workspace is also deferred; this repository does not contain an admin login, invoice system or staff-card generator.
 

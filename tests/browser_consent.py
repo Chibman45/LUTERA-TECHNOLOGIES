@@ -5,7 +5,7 @@ from pathlib import Path
 import json, os, shutil, threading
 from playwright.sync_api import sync_playwright
 
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(os.environ.get('LUTERA_TEST_DIR',Path(__file__).resolve().parents[1])).resolve()
 KEY='lutera_cookie_consent_session_v2'
 class Handler(SimpleHTTPRequestHandler):
  def translate_path(self,path):return super().translate_path(path.removeprefix('/LUTERA-TECHNOLOGIES'))
@@ -16,7 +16,7 @@ base=os.environ.get('LUTERA_TEST_URL')
 if not base:
  server=ThreadingHTTPServer(('127.0.0.1',0),partial(Handler,directory=str(ROOT)))
  threading.Thread(target=server.serve_forever,daemon=True).start()
- base=f'http://127.0.0.1:{server.server_port}/LUTERA-TECHNOLOGIES/'
+ base=f'http://127.0.0.1:{server.server_port}'+os.environ.get('LUTERA_TEST_BASE','/LUTERA-TECHNOLOGIES/')
 
 with sync_playwright() as p:
  browser=p.chromium.launch(executable_path=shutil.which('chromium') or None,args=['--no-sandbox'])
@@ -71,7 +71,7 @@ with sync_playwright() as p:
  page.get_by_role('button',name='Reject optional').click()
  # Returning through a link outside this project is another fresh visit.
  page.route('**/other-project/',lambda route:route.fulfill(body=f'<a href="{base}">Return to LUTERA</a>',content_type='text/html'))
- page.goto(base+'../other-project/');page.get_by_role('link',name='Return to LUTERA').click()
+ page.goto('https://consent-return.example/other-project/');page.get_by_role('link',name='Return to LUTERA').click()
  page.wait_for_load_state('networkidle');assert panel.is_visible()
  # Old persistent approval cannot suppress the visit notice.
  page.evaluate("localStorage.setItem('lutera_cookie_consent_v1',JSON.stringify({version:1,choice:'accepted',chosenAt:Date.now(),expiresAt:Date.now()+15552000000}))")

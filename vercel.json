@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "python3 scripts/build_vercel.py",
+  "outputDirectory": "_site",
+  "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/LUTERA-TECHNOLOGIES",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/LUTERA-TECHNOLOGIES/:path*",
+      "destination": "/:path*",
+      "permanent": true
+    }
+  ]
+}

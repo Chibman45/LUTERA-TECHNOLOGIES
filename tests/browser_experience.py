@@ -3,8 +3,8 @@ import json,os,shutil,threading
 from pathlib import Path
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from functools import partial
-from urllib.parse import parse_qs
-ROOT=Path(__file__).resolve().parents[1]
+from urllib.parse import parse_qs,urlsplit
+ROOT=Path(os.environ.get('LUTERA_TEST_DIR',Path(__file__).resolve().parents[1])).resolve()
 class Handler(SimpleHTTPRequestHandler):
  def translate_path(self,path):return super().translate_path(path.removeprefix('/LUTERA-TECHNOLOGIES'))
  def log_message(self,*args):pass
@@ -13,7 +13,7 @@ base=os.environ.get('LUTERA_TEST_URL')
 if not base:
  server=ThreadingHTTPServer(('127.0.0.1',0),partial(Handler,directory=str(ROOT)))
  threading.Thread(target=server.serve_forever,daemon=True).start()
- base=f'http://127.0.0.1:{server.server_port}/LUTERA-TECHNOLOGIES/' 
+ base=f'http://127.0.0.1:{server.server_port}'+os.environ.get('LUTERA_TEST_BASE','/LUTERA-TECHNOLOGIES/')
 # Programmatic route jumps here represent internal browsing within the visit.
 def visit(page,url,**options):
  return page.goto(url,referer=base,**options)
@@ -143,7 +143,7 @@ with sync_playwright() as p:
    assert toggle.evaluate('(el)=>el===document.activeElement')
    toggle.click();q.locator('h1').click();assert not options.is_visible()
  q.set_viewport_size({'width':1440,'height':1000});visit(q,base,wait_until='networkidle')
- 
+
  if os.environ.get('LUTERA_SCREENSHOTS'):q.screenshot(path=os.environ['LUTERA_SCREENSHOTS']+'/desktop.png',full_page=True)
  q.set_viewport_size({'width':390,'height':844});
  if os.environ.get('LUTERA_SCREENSHOTS'):q.screenshot(path=os.environ['LUTERA_SCREENSHOTS']+'/mobile.png',full_page=True)
@@ -154,7 +154,7 @@ with sync_playwright() as p:
  assert r.locator('[data-quote-step]:visible').count()==3
  assert r.locator('#rfq-form').get_attribute('method')=='POST'
  r.locator('.floating-contact-toggle').click();assert r.locator('.floating-contact-options').is_visible()
- assert r.locator('.floating-quote-link').get_attribute('href')== '/LUTERA-TECHNOLOGIES/request-quote/'
+ assert r.locator('.floating-quote-link').get_attribute('href')==urlsplit(base).path+'request-quote/'
  nojs.close()
  # Storage restrictions retain the current list and pass it to the quote URL.
  limited=b.new_context(viewport={'width':1440,'height':1000},reduced_motion='reduce');r=limited.new_page();r.add_init_script("Storage.prototype.setItem=function(){throw new Error('blocked')};Storage.prototype.getItem=function(){throw new Error('blocked')};");r.goto(base+'solutions/',wait_until='networkidle');r.locator('[data-add="laptop"]').first.click();r.locator('.floating-contact-toggle').click();r.locator('.floating-quote-link').click();r.wait_for_url('**/request-quote/**');assert 'items=laptop' in r.url;assert 'Business laptops' in r.locator('[data-quote-list]').inner_text();limited.close()

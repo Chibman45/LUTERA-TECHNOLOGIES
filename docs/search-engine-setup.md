@@ -5,10 +5,10 @@ The site is public and can be crawled without a login. Automated SEO checks do n
 ## Google Search Console
 
 1. Sign in at [Google Search Console](https://search.google.com/search-console/).
-2. Add a **URL-prefix** property using the exact address `https://chibman45.github.io/LUTERA-TECHNOLOGIES/`. The shared `github.io` domain is not a domain that LUTERA can verify through DNS.
+2. Add a **URL-prefix** property using the exact address `https://luteratech.github.io/LUTERA-TECHNOLOGIES/`. The shared `github.io` domain is not a domain that LUTERA can verify through DNS.
 3. Choose **HTML tag** under ownership verification and copy the `content` value from Google's `google-site-verification` meta tag.
 4. Send that meta tag to Codex, or add its content value as the GitHub repository Actions variable `GOOGLE_SITE_VERIFICATION`. The deployment workflow reads the variable; it is a public ownership token, not a password. Re-run the **Deploy LUTERA to GitHub Pages** workflow, check the tag in the homepage source, then click **Verify** in Search Console.
-5. Open **Sitemaps** and submit `https://chibman45.github.io/LUTERA-TECHNOLOGIES/sitemap.xml`.
+5. Open **Sitemaps** and submit `https://luteratech.github.io/LUTERA-TECHNOLOGIES/sitemap.xml`.
 6. Use **URL Inspection** for the homepage and the four new service pages. If eligible, select **Request indexing**. Check the Pages and Performance reports as Google collects data.
 
 Keep the ownership tag in place after verification. No Google account or verified Search Console property was created by this code update. The site does not need Analytics or advertising scripts to verify ownership.
@@ -28,7 +28,7 @@ An HTTP 200 response means the notification was received; HTTP 202 means receipt
 
 ## robots.txt on a GitHub project site
 
-The project publishes `/LUTERA-TECHNOLOGIES/robots.txt`. Search engines obtain the authoritative file at the hostname root, `https://chibman45.github.io/robots.txt`, which returned 404 during this audit. A missing robots file does **not** block crawling. A project-path robots file does not replace a root robots file; submit the sitemap directly in the verified tools above. This update does not create or alter a separate root-domain repository.
+The project publishes `/LUTERA-TECHNOLOGIES/robots.txt`. Search engines obtain the authoritative file at the hostname root, `https://luteratech.github.io/robots.txt`. A missing robots file does **not** block crawling. A project-path robots file does not replace a root robots file; submit the sitemap directly in the verified tools above. This update does not create or alter a separate root-domain repository.
 
 ## What improves discovery over time
 

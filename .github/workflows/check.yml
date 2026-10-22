@@ -24,8 +24,16 @@ jobs:
       - run: node --check assets/app.js
       - run: node --check assets/experience.js
       - run: node --check assets/motion.js
+      - name: Verify Vercel production and preview artifacts
+        run: python tests/build_vercel.py
   browser:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        hosting: [github-pages, vercel]
+    env:
+      LUTERA_TEST_DIR: ${{ matrix.hosting == 'vercel' && '_site' || '.' }}
+      LUTERA_TEST_BASE: ${{ matrix.hosting == 'vercel' && '/' || '/LUTERA-TECHNOLOGIES/' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,6 +44,11 @@ jobs:
           GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
           BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
         run: python scripts/build.py
+      - name: Build Vercel root-hosted pages
+        if: matrix.hosting == 'vercel'
+        env:
+          SITE_ORIGIN: https://lutera-ci.example
+        run: python scripts/build_vercel.py
       - name: Install browser test dependencies
         run: |
           python -m pip install -r tests/requirements.txt

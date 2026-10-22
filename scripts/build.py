@@ -13,7 +13,11 @@ from experience import enhance, chrome
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = os.environ.get('SITE_BASE', '/LUTERA-TECHNOLOGIES/').rstrip('/') + '/'
-ORIGIN = os.environ.get('SITE_ORIGIN', 'https://chibman45.github.io').rstrip('/')
+GITHUB_OWNER = os.environ.get('GITHUB_REPOSITORY_OWNER', 'luteratech').lower()
+ORIGIN = os.environ.get('SITE_ORIGIN', f'https://{GITHUB_OWNER}.github.io').rstrip('/')
+FORM_ORIGIN = os.environ.get('FORM_ORIGIN', ORIGIN).rstrip('/')
+NOINDEX = os.environ.get('SITE_NOINDEX') == '1'
+HOSTING_PROVIDER = 'Vercel' if os.environ.get('SITE_HOSTING') == 'vercel' else 'GitHub Pages'
 REV = 'services2'
 
 ICONS = {
@@ -104,7 +108,7 @@ def contactside():
 
 contact=pagehero('A conversation is<br>a good place to start.','Tell us about the project, the question or the technology decision ahead. We’ll help you find a practical next step.','','Contact')
 contact+='<section><div class="wrap form-layout"><div class="form-box"><h2>Send us a message</h2><p>Fields marked * are required. Please leave out passwords, payment details and confidential documents.</p>'
-contact+=f'<form id="contact-form" action="https://formsubmit.co/{COMPANY["email"]}" method="POST"><input type="hidden" name="_subject" value="Lutera | New contact enquiry"><input type="hidden" name="_template" value="table"><input type="hidden" name="_next" value="{ORIGIN+BASE}thank-you/"><div class="honey" aria-hidden="true"><label for="contact-website">Leave empty</label><input id="contact-website" name="_honey" tabindex="-1" autocomplete="off"></div><div class="form-grid">'
+contact+=f'<form id="contact-form" action="https://formsubmit.co/{COMPANY["email"]}" method="POST"><input type="hidden" name="_subject" value="Lutera | New contact enquiry"><input type="hidden" name="_template" value="table"><input type="hidden" name="_next" value="{FORM_ORIGIN+BASE}thank-you/"><div class="honey" aria-hidden="true"><label for="contact-website">Leave empty</label><input id="contact-website" name="_honey" tabindex="-1" autocomplete="off"></div><div class="form-grid">'
 contact+=field('name','Your name',required=True,attrs='maxlength="120" autocomplete="name"')+field('organization','Organisation',attrs='maxlength="160" autocomplete="organization"')+field('email','Email address','email',True,'maxlength="254" autocomplete="email"')
 contact+=f'<div class="field full"><label for="message">Your message *</label><textarea id="message" name="message" required minlength="10" maxlength="5000"></textarea></div><div class="field full"><label class="check"><input type="checkbox" name="privacy_acknowledged" required><span>I have read the <a href="{url("privacy")}">privacy notice</a>. *</span></label></div><div class="field full"><button class="btn" type="submit">Send message ↗</button><p id="contact-status" role="status"></p></div></div></form></div>'+contactside()+'</div></section>'
 pages['contact']=('Contact',contact)
@@ -125,14 +129,14 @@ for service in SERVICES[:4]:
         body+='<section><div class="wrap support-terms"><h2>Support that stays clear.</h2><div class="commitment-grid"><article><h3>A named contact</h3><p>One named support contact for your site, with maintenance and on-site arrangements agreed in writing.</p></article><article><h3>Locally held spare parts</h3><p>Support for the equipment we supply, including locally held spares and the agreed parts provision.</p></article><article><h3>Warranty from acceptance</h3><p>The parts warranty starts at site acceptance. The written quotation confirms its duration, coverage and exclusions.</p></article></div><p class="form-footnote">We reply to enquiries within two working days. Fault resolution times and any service-level commitments are agreed separately.</p></div></section>'
     pages['services/'+service['slug']]=(service['title'],body+cta())
 
-legal=json.loads((ROOT/'content/legal.json').read_text())
+legal=json.loads((ROOT/'content/legal.json').read_text().replace('{{hosting_provider}}', HOSTING_PROVIDER))
 for route,(title,subtitle,parts) in legal.items():
     if route in ['privacy','cookies']:parts.append(('Your cookie preferences',STORAGE_NOTICE))
     pages[route]=(title,pagehero(title,subtitle,'',title)+'<section><div class="wrap legal">'+''.join('<h2>'+heading+'</h2><p>'+copy+'</p>' for heading,copy in parts)+'</div></section>')
 pages['thank-you']=('Enquiry submitted',pagehero('Thank you for<br>starting the conversation.','If you completed the form service’s verification, your enquiry has been submitted for processing. We reply within two working days.','','Thank you')+'<section><div class="wrap split"><div><h2>Your next step.</h2><p>An enquiry does not place an order. If you need to follow up or did not finish the form service’s check, contact us directly using the details here.</p>'+btn('','Back to home')+'</div>'+contactside()+'</div></section>')
 pages['404']=('Page not found',pagehero('A different<br>way forward.','This page could not be found. Explore our services or return to the homepage.','','Page not found')+'<section><div class="wrap">'+btn('','Back to home')+'</div></section>')
 
-pages=enhance(pages,BASE,ORIGIN,icon,eye,btn,pagehero,cta)
+pages=enhance(pages,BASE,FORM_ORIGIN,icon,eye,btn,pagehero,cta)
 pages['']=(pages[''][0],pages[''][1].replace(cta(),commitments(BASE)+cta()))
 pages=add_digital_pages(pages,BASE,pagehero,icon)
 
@@ -170,7 +174,7 @@ for route,(page_title,body) in pages.items():
     canonical=ORIGIN+BASE+'404.html' if route=='404' else ORIGIN+url(route)
     organization={'@context':'https://schema.org','@type':'Organization','name':COMPANY['name'],'legalName':COMPANY['legal_name'],'url':ORIGIN+BASE,'description':NATURE_OF_BUSINESS,'email':COMPANY['email'],'telephone':COMPANY['phone'],'address':{'@type':'PostalAddress','streetAddress':STREET_ADDRESS,'addressLocality':CITY,'addressRegion':STATE,'addressCountry':'NG'}}
     structured=schema(route,title,description,organization,ORIGIN,BASE)
-    robots='noindex,follow' if route in ['404','thank-you'] else 'index,follow,max-image-preview:large'
+    robots='noindex,follow' if NOINDEX or route in ['404','thank-you'] else 'index,follow,max-image-preview:large'
     verification=''.join(f'<meta name="{name}" content="{escape(os.environ[key],quote=True)}">' for key,name in [('GOOGLE_SITE_VERIFICATION','google-site-verification'),('BING_SITE_VERIFICATION','msvalidate.01')] if os.environ.get(key))
     nav=''.join(f'<a href="{url(r)}"'+(' aria-current="page"' if route==r or (r=='services' and route.startswith('services/')) else '')+'>'+label+'</a>' for r,label in [('about','About'),('services','Services'),('solutions','Solutions'),('contact','Contact')])
     nav+='<button class="enquiry-nav" type="button" data-open-enquiry aria-label="View enquiry list">Enquiry <span data-enquiry-count>0</span></button>'+btn('request-quote','Request a quote','light')
@@ -181,7 +185,7 @@ for route,(page_title,body) in pages.items():
     destination=ROOT/('404.html' if route=='404' else route+'/index.html' if route else 'index.html')
     destination.parent.mkdir(parents=True,exist_ok=True)
     destination.write_text(responsive_photos(doc.replace('↗',arrow).replace('<br>','<br> ')))
-(ROOT/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join('<url><loc>'+ORIGIN+url(r)+'</loc></url>' for r in pages if r not in ['404','thank-you'])+'</urlset>')
-(ROOT/'robots.txt').write_text('User-agent: *\nAllow: /\nSitemap: '+ORIGIN+BASE+'sitemap.xml\n')
+(ROOT/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join('<url><loc>'+ORIGIN+url(r)+'</loc></url>' for r in pages if not NOINDEX and r not in ['404','thank-you'])+'</urlset>')
+(ROOT/'robots.txt').write_text('User-agent: *\nAllow: /\n'+('' if NOINDEX else 'Sitemap: '+ORIGIN+BASE+'sitemap.xml\n'))
 (ROOT/'.nojekyll').touch()
 print(f'Built {len(pages)} public pages at {ORIGIN+BASE}')

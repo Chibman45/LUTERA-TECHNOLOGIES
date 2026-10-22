@@ -1,0 +1,9 @@
+.git
+.github
+.vercel
+_site
+docs
+tests
+.env*
+__pycache__
+*.pyc
