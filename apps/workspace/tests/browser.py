@@ -4,6 +4,7 @@ import copy
 import json
 from pathlib import Path
 import re
+import shutil
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parents[1]
 values=dict(line.split('=',1) for line in (root/'.env.local').read_text().splitlines() if line and not line.startswith('#'))
@@ -43,7 +44,7 @@ def payload(route):
  if action=='export':return route.fulfill(status=200,content_type='application/pdf',headers={'Content-Disposition':'attachment; filename="fixture.pdf"'},body=(resultdir/'exports/quotation.pdf').read_bytes())
  return respond({'error':'Fixture endpoint not implemented: '+action},400)
 with sync_playwright() as p:
- browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+ browser=p.chromium.launch(executable_path=shutil.which('chromium') or None,headless=True,args=['--no-sandbox'])
  context=browser.new_context(viewport={'width':1440,'height':1000},device_scale_factor=1)
  page=context.new_page()
  page.on('pageerror',lambda e:errors.append(str(e)))

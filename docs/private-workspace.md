@@ -92,10 +92,10 @@ this public source repository.
 ## Deployment configuration and account setup
 
 Steps 1–2 describe the configuration already provisioned. The exact Production
-origin is `https://lutera-workspace.vercel.app`. An explicit `WORKSPACE_ORIGIN`
-was saved after the initial build; the initial deployment uses the tested
-`VERCEL_PROJECT_PRODUCTION_URL` fallback for the same origin. The next deployment
-will also apply the explicit value. `PUBLIC_SITE_DEPLOY_HOOK` is pending an
+origin is `https://lutera-workspace.vercel.app`. The subsequent READY deployment
+`dpl_7ewWufSfptQySC1tWR3bRmdQEhEJ` applies the explicit `WORKSPACE_ORIGIN`;
+the initial deployment also passed checks using the tested
+`VERCEL_PROJECT_PRODUCTION_URL` fallback. `PUBLIC_SITE_DEPLOY_HOOK` is pending an
 owner-created hook; no secret has been requested in chat. Preview environments
 do not receive the production configuration.
 
@@ -254,6 +254,8 @@ Verified locally:
   search returns 401. Root, `/admin` and a wrong entry return 404; anonymous
   session/state return 401 and cross-origin mutations return 403. Responses
   carry noindex/no-store and CSP headers. No owner credentials were entered.
+- GitHub Private workspace checks run `39831731770` passed both application and
+  database jobs for `2d5b85ee99210bbd178d2642dc15c3891cce7c63`.
 
 The actual Supabase access suite has passed, fixtures have rolled back and the
 security advisor still reports no findings. The separate Vercel app is deployed.
