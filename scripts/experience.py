@@ -3,7 +3,7 @@ from html import escape
 from company import digital_services
 
 def enhance(pages, base, origin, icon, eye, btn, pagehero, cta):
-    def photo(name, alt, cls=''):
+    def photo(name, alt, cls='card-photo'):
         return f'<img class="{cls}" src="{base}assets/photos/{name}.jpg" width="1100" height="730" loading="lazy" decoding="async" alt="{alt}">'
     def add(item, label='Add to enquiry'):
         return f'<button class="btn light add-equipment" type="button" data-add="{item}">{label} <span aria-hidden="true">+</span></button>'

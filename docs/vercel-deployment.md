@@ -73,10 +73,11 @@ Avoid conflicting domain-level redirects in Vercel or Cloudflare.
 - The privacy notice identifies Vercel as the hosting provider.
 - Only public pages/assets are packaged. Source, content files, documentation,
   tests, environment files and private records are not served from `_site`.
-- Legacy `/LUTERA-TECHNOLOGIES/...` migration rules are configured for the Vercel
-  hostname. The current live probe returned 404, so publish the verified root
-  paths and investigate Vercel routing/settings before relying on these extra
-  prefix rules. They cannot redirect requests arriving at GitHub's old hostname.
+- Legacy `/LUTERA-TECHNOLOGIES/...` migration rules cover both slash-terminated
+  page paths and extension-bearing assets. Vercel normalizes trailing slashes
+  before matching strict redirect patterns; both forms must be handled. The
+  live review now probes root, nested, query, asset and missing-path cases.
+  These rules cannot redirect requests arriving at GitHub's old hostname.
 - Unknown routes use the static `404.html`; there is no catch-all homepage rewrite.
 
 The builder stages its work in a temporary directory. Committed legacy HTML
@@ -102,8 +103,8 @@ python scripts/review_live.py --output /tmp/lutera-live-review.json
 ```
 
 This checks all 19 pages, final-domain SEO and native form destinations, sitemap,
-robots, IndexNow token, a real unknown-route 404, and permanent alias redirects
-with a quote path/query. It performs no form submission. Browser suites separately
+robots, IndexNow token, a real unknown-route 404, permanent alias redirects
+with a quote path/query, and six legacy-prefix cases. It performs no form submission. Browser suites separately
 verify interactions with intercepted email requests. See `launch-review.md` for
 the current release status and remaining owner checks.
 

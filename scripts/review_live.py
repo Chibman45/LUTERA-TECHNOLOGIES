@@ -30,6 +30,30 @@ def fetch(url):
         return response.status, response.headers, response.read().decode('utf-8')
 
 
+def redirect_check(start, expected, expected_status=200):
+    current, chain, failures = start, [], []
+    allowed_hosts = {urlsplit(start).netloc, urlsplit(expected).netloc}
+    try:
+        for _ in range(5):
+            status, headers, _ = fetch(current)
+            chain.append({'url': current, 'status': status})
+            if current == expected and status == expected_status:
+                break
+            if status not in (301, 308) or not headers.get('Location'):
+                failures.append('expected a permanent redirect preserving the intended path and query')
+                break
+            target = urljoin(current, headers['Location'])
+            if urlsplit(target).netloc not in allowed_hosts or urlsplit(target).scheme != 'https':
+                failures.append('redirect leaves the approved primary/alias hosts')
+                break
+            current = target
+        else:
+            failures.append('redirect loop or too many hops')
+    except (OSError, ValueError) as error:
+        failures.append(str(error))
+    return {'url': start, 'passed': not failures, 'failures': failures, 'chain': chain}
+
+
 class Head(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -134,26 +158,13 @@ def main():
     if not args.skip_aliases:
         for alias in SITE['hosting']['redirect_origins']:
             probe = '/request-quote/?need=infrastructure'
-            current, chain, failures = alias + probe, [], []
-            try:
-                for _ in range(5):
-                    status, headers, _ = fetch(current)
-                    chain.append({'url': current, 'status': status})
-                    if current == origin + probe and status == 200:
-                        break
-                    if status not in (301, 308) or not headers.get('Location'):
-                        failures.append('expected a permanent redirect to the primary domain, preserving path and query')
-                        break
-                    target = urljoin(current, headers['Location'])
-                    if urlsplit(target).netloc not in {urlsplit(origin).netloc, urlsplit(alias).netloc} or urlsplit(target).scheme != 'https':
-                        failures.append('redirect leaves the approved primary/alias hosts')
-                        break
-                    current = target
-                else:
-                    failures.append('redirect loop or too many hops')
-            except (OSError, ValueError) as error:
-                failures.append(str(error))
-            checks.append({'url': alias + probe, 'passed': not failures, 'failures': failures, 'chain': chain})
+            checks.append(redirect_check(alias + probe, origin + probe))
+    prefix = '/LUTERA-TECHNOLOGIES'
+    for path in ['', '/', '/request-quote/?need=infrastructure&category=hardware',
+                 '/services/ai-automation/', '/assets/logo/lutera-favicon.svg',
+                 '/launch-check-missing-route/']:
+        status = 404 if 'missing-route' in path else 200
+        checks.append(redirect_check(origin + prefix + path, origin + (path or '/'), status))
     report = {'reviewed_at': datetime.now(timezone.utc).isoformat(), 'origin': origin,
               'passed': all(check['passed'] for check in checks), 'checks': checks,
               'scope': 'Read-only public HTTP/SEO checks. No forms submitted; no inbox delivery or search-account verification performed.'}

@@ -1,6 +1,7 @@
 """Build the public, database-free Lutera website from shared content and templates."""
 from pathlib import Path
 from html import escape
+from hashlib import sha256
 import json
 import os
 import re
@@ -163,11 +164,21 @@ def responsive_photos(markup):
         photo=re.search(r'assets/photos/([a-z-]+)\.jpg',tag)
         if not photo:return tag
         stem=photo.group(1)
-        sizes='(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) 48vw, 550px'
-        return tag.replace(stem+'.jpg',stem+'-960.webp').replace('<img ',f'<img srcset="{BASE}assets/photos/{stem}-480.webp 480w, {BASE}assets/photos/{stem}-960.webp 960w" sizes="{sizes}" ',1)
+        sizes='(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc((100vw - 80px) / 2), (max-width: 1199px) calc((100vw - 112px) / 2), 544px'
+        if 'card-photo' in tag:
+            sizes='(max-width: 639px) calc(100vw - 34px), (max-width: 1023px) calc((100vw - 72px) / 2), (max-width: 1199px) calc((100vw - 116px) / 3), 361px'
+        elif 'digital-photo' in tag:
+            sizes='(max-width: 639px) calc(100vw - 34px), (max-width: 1023px) calc((100vw - 72px) / 2), (max-width: 1199px) calc((100vw - 92px) / 2), 554px'
+        elif 'data-explorer-photo' in tag:
+            sizes='(max-width: 639px) calc(100vw - 82px), (max-width: 1023px) 40vw, (max-width: 1199px) 60vw, 684px'
+        variants=', '.join(f'{BASE}assets/photos/{stem}-{width}.webp {width}w' for width in [480,768,960])
+        return tag.replace(stem+'.jpg',stem+'-960.webp').replace('<img ',f'<img srcset="{variants}" sizes="{sizes}" ',1)
     return re.sub(r'<img\b[^>]*>',optimise,markup)
 
 arrow='<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6h12v12"/></svg>'
+styles='\n'.join((ROOT/'assets'/name).read_text() for name in ['style.css','experience.css','consent.css'])
+stylesheet='site-'+sha256(styles.encode()).hexdigest()[:16]+'.css'
+(ROOT/'assets'/stylesheet).write_text(styles)
 for route,(page_title,body) in pages.items():
     title,description=metadata(route)
     canonical=ORIGIN+BASE+'404.html' if route=='404' else ORIGIN+url(route)
@@ -177,9 +188,10 @@ for route,(page_title,body) in pages.items():
     verification=''.join(f'<meta name="{name}" content="{escape(os.environ[key],quote=True)}">' for key,name in [('GOOGLE_SITE_VERIFICATION','google-site-verification'),('BING_SITE_VERIFICATION','msvalidate.01')] if os.environ.get(key))
     nav=''.join(f'<a href="{url(r)}"'+(' aria-current="page"' if route==r or (r=='services' and route.startswith('services/')) else '')+'>'+label+'</a>' for r,label in [('about','About'),('services','Services'),('solutions','Solutions'),('contact','Contact')])
     nav+='<button class="enquiry-nav" type="button" data-open-enquiry aria-label="View enquiry list">Enquiry <span data-enquiry-count>0</span></button>'+btn('request-quote','Request a quote','light')
+    accent_preload = f'<link rel="preload" href="{BASE}assets/fonts/PlayfairDisplay-Italic-500.woff2" as="font" type="font/woff2" crossorigin>' if route=='' else ''
     head=f'''<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{escape(title)}</title><meta name="description" content="{escape(description,quote=True)}"><meta name="robots" content="{robots}">{verification}<meta name="theme-color" content="#F3F2EE">{structured}<link rel="canonical" href="{canonical}">
 <meta property="og:title" content="{escape(title,quote=True)}"><meta property="og:description" content="{escape(description,quote=True)}"><meta property="og:type" content="website"><meta property="og:url" content="{canonical}"><meta property="og:image" content="{ORIGIN+BASE}assets/social.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Lutera — hardware, software and intelligent systems"><meta property="og:site_name" content="{escape(COMPANY['name'],quote=True)}"><meta property="og:locale" content="en_NG"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{escape(title,quote=True)}"><meta name="twitter:description" content="{escape(description,quote=True)}"><meta name="twitter:image" content="{ORIGIN+BASE}assets/social.png">
-<link rel="icon" href="{BASE}assets/logo/lutera-favicon.svg?v={REV}" type="image/svg+xml"><link rel="preload" href="{BASE}assets/fonts/Sora-400.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="{BASE}assets/fonts/Sora-500.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="{BASE}assets/fonts/Sora-600.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="{BASE}assets/style.css?v={REV}"><link rel="stylesheet" href="{BASE}assets/experience.css?v={REV}"><link rel="stylesheet" href="{BASE}assets/consent.css?v={REV}"><script src="{BASE}assets/consent.js?v=consent2" defer></script><script src="{BASE}assets/app.js?v={REV}" defer></script><script src="{BASE}assets/experience.js?v={REV}" defer></script><script src="{BASE}assets/motion.js?v={REV}" defer></script><noscript><style>.enquiry-nav,[data-open-enquiry],.menu{{display:none!important}}@media(max-width:1023px){{header .nav{{height:auto;flex-wrap:wrap;padding-top:20px;padding-bottom:20px}}#navigation{{display:flex;position:static;width:100%;max-height:none;flex-wrap:wrap;padding:16px 0 0;border:0;box-shadow:none}}#navigation>a:not(.btn){{padding:8px}}}}</style></noscript>'''
+<link rel="icon" href="{BASE}assets/logo/lutera-favicon.svg?v={REV}" type="image/svg+xml"><link rel="preload" href="{BASE}assets/fonts/Sora-400.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="{BASE}assets/fonts/Sora-500.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="{BASE}assets/fonts/Sora-600.woff2" as="font" type="font/woff2" crossorigin>{accent_preload}<link rel="stylesheet" href="{BASE}assets/{stylesheet}"><script src="{BASE}assets/consent.js?v=consent2" defer></script><script src="{BASE}assets/app.js?v={REV}" defer></script><script src="{BASE}assets/experience.js?v={REV}" defer></script><script src="{BASE}assets/motion.js?v={REV}" defer></script><noscript><style>.enquiry-nav,[data-open-enquiry],.menu{{display:none!important}}@media(max-width:1023px){{header .nav{{height:auto;flex-wrap:wrap;padding-top:20px;padding-bottom:20px}}#navigation{{display:flex;position:static;width:100%;max-height:none;flex-wrap:wrap;padding:16px 0 0;border:0;box-shadow:none}}#navigation>a:not(.btn){{padding:8px}}}}</style></noscript>'''
     doc='<!DOCTYPE html><html lang="en-NG"><head>'+head+'</head><body data-page="'+route+'"><a href="#main" class="skip">Skip to content</a><header><div class="wrap nav">'+brand()+'<button class="menu" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="navigation"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><nav id="navigation" class="links" aria-label="Main navigation">'+nav+'</nav></div></header><main id="main" tabindex="-1">'+body+'</main>'+footer+chrome(BASE)+consent_notice(BASE)+'</body></html>'
     destination=ROOT/('404.html' if route=='404' else route+'/index.html' if route else 'index.html')
     destination.parent.mkdir(parents=True,exist_ok=True)

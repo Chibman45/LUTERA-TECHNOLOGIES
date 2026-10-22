@@ -77,6 +77,17 @@ with sync_playwright() as p:
  q.goto(base,referer=base,wait_until='networkidle')
  assert q.evaluate('document.getAnimations().filter(a=>a.playState==="running").length')==0
  assert not any('/three/' in url or 'scene.js' in url for url in requests)
+ # Fresh contexts verify the real selected image rather than a larger cached
+ # candidate left over from resizing. Mobile high-DPI screens get a middle size.
+ for width,scale,variant in [(1440,1,'-480.webp'),(390,1.75,'-768.webp')]:
+  image_context=b.new_context(viewport={'width':width,'height':1000},device_scale_factor=scale,reduced_motion='reduce')
+  image_page=image_context.new_page();image_page.goto(base,wait_until='load')
+  image_page.locator('.service-card>img').evaluate_all('(imgs)=>imgs.forEach(img=>img.loading="eager")')
+  image_page.wait_for_function('Array.from(document.querySelectorAll(".service-card>img")).every(img=>img.complete&&img.naturalWidth>0)')
+  assert all(img.evaluate('(el)=>el.currentSrc').endswith(variant) for img in image_page.locator('.service-card>img').all()),(width,scale)
+  assert image_page.locator('link[rel="stylesheet"]').count()==1
+  assert image_page.locator('link[rel="preload"][href$="PlayfairDisplay-Italic-500.woff2"]').count()==1
+  image_context.close()
  # Mobile navigation and quote link remain available with JavaScript disabled.
  nc=b.new_context(java_script_enabled=False,viewport={'width':390,'height':844});n=nc.new_page()
  n.goto(base+'request-quote/',wait_until='load')

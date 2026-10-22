@@ -23,6 +23,12 @@ Edit company facts, service summaries, image mappings and delivery/support commi
 
 Photographs illustrate services and equipment, rather than claiming to show Lutera projects, premises or staff. Sources are documented in `docs/photo-credits.md`. Supplied font licences are included. Logo geometry and outlined wordmarks are preserved. Responsive WebP photo assets are prepared with `scripts/prepare_images.py` (Pillow required only for this developer task). `scripts/prepare_hero_images.py` regenerates the responsive hero backgrounds from the credited image sources. `scripts/render_social.py` regenerates the committed social PNGs using Playwright/Chromium; it is a developer tool, not a runtime dependency.
 
+Card photographs have 480/768/960px candidates and layout-specific `sizes`, so
+desktop cards and high-DPI phones can avoid unnecessarily large downloads. The
+build combines the three source stylesheets into one file with a content hash
+in its name, and preloads the accent font only on the homepage that uses it.
+The source CSS and brand tokens remain editable separately.
+
 ## Enquiries and privacy
 
 The quote wizard, equipment list and comparison feed a native HTTPS FormSubmit POST to **chimaster010@gmail.com**. The contact form uses the same recipient. No database or private credentials are used. Direct email, phone and the bottom-right WhatsApp/quote control remain available. Forms also work without JavaScript; mobile navigation remains available without JavaScript.

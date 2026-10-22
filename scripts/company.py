@@ -32,7 +32,7 @@ def company_details():
 
 def service_cards(base, icon, heading="h3"):
     return '<div class="service-grid" data-service-grid>'+''.join(
-        f'<article class="service-card" data-service="{s["key"]}"><img src="{base}assets/photos/{s["image"]}.jpg" width="960" height="640" loading="lazy" decoding="async" alt="{escape(s["alt"],quote=True)}"><div class="service-card-copy">{icon(s["icon"])}<{heading}>{escape(s["title"])}</{heading}><p>{escape(s["description"])}</p><a class="text-link" href="{base}services/{s["slug"]}/">Explore {escape(s["title"])} ↗</a></div></article>'
+        f'<article class="service-card" data-service="{s["key"]}"><img class="card-photo" src="{base}assets/photos/{s["image"]}.jpg" width="960" height="640" loading="lazy" decoding="async" alt="{escape(s["alt"],quote=True)}"><div class="service-card-copy">{icon(s["icon"])}<{heading}>{escape(s["title"])}</{heading}><p>{escape(s["description"])}</p><a class="text-link" href="{base}services/{s["slug"]}/">Explore {escape(s["title"])} ↗</a></div></article>'
         for s in SERVICES)+'</div>'
 
 def commitments(base):
@@ -41,5 +41,5 @@ def commitments(base):
 
 def digital_services(base):
     return ('<section class="digital-services" id="digital-solutions"><div class="wrap"><div class="section-head"><h2>Improve a workflow.<br>Connect your systems.</h2><p>Start with the process, application or decision you want to improve. Find the right place to begin below.</p></div><div class="digital-grid">'+''.join(
-        f'<article class="equipment-card"><img src="{base}assets/photos/{DIGITAL_SERVICE_IMAGES[key][0]}.jpg" width="960" height="640" loading="lazy" decoding="async" alt="{escape(DIGITAL_SERVICE_IMAGES[key][1],quote=True)}"><div><h3>{escape(title)}</h3><p>{escape(description)}</p><a class="text-link" href="{base}request-quote/?category={key}">Discuss your project ↗</a><a class="text-link service-detail-link" href="{base}services/{DIGITAL_SERVICE_SLUGS[key]}/">Explore {escape(title)} ↗</a></div></article>'
+        f'<article class="equipment-card"><img class="digital-photo" src="{base}assets/photos/{DIGITAL_SERVICE_IMAGES[key][0]}.jpg" width="960" height="640" loading="lazy" decoding="async" alt="{escape(DIGITAL_SERVICE_IMAGES[key][1],quote=True)}"><div><h3>{escape(title)}</h3><p>{escape(description)}</p><a class="text-link" href="{base}request-quote/?category={key}">Discuss your project ↗</a><a class="text-link service-detail-link" href="{base}services/{DIGITAL_SERVICE_SLUGS[key]}/">Explore {escape(title)} ↗</a></div></article>'
         for key,title,description in DIGITAL_SERVICES)+'</div></div></section>')
