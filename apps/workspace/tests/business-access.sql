@@ -99,7 +99,7 @@ reset role;
 insert into private.work_job_config(id,proof_hash) values(1,encode(sha256(convert_to(repeat('b',64),'UTF8')),'hex')) on conflict(id) do update set proof_hash=excluded.proof_hash;
 select set_config('request.jwt.claims',json_build_object('sub',owner_id,'aal','aal2','session_id',session_id)::text,true) from work_test_ids;
 set local role authenticated;
-do $$declare c jsonb;cid uuid;quote uuid;share uuid;refused boolean;
+do $$declare c jsonb;cid uuid;quote uuid;share uuid;refused boolean;doc jsonb;order_data jsonb;
 begin
  select id into cid from public.work_customers where name='OPERATIONS FIXTURE';
  c=public.work_business(jsonb_build_object('command','quote_create','customer_id',cid));quote=(c->>'document_id')::uuid;
@@ -116,6 +116,14 @@ begin
  if c->'legacy'->>'number' is null then raise exception 'Shared quotation missing';end if;
  perform public.work_customer_portal(repeat('b',64),jsonb_build_object('action','accept','share_id',share,'session_hash',repeat('c',64)));
  if not exists(select 1 from public.work_quotes where document_id=quote and outcome='accepted' and accepted_by='portal-fixture@example.invalid') then raise exception 'Portal acceptance not recorded';end if;
+ select payload into doc from public.work_documents where id=quote;
+ order_data=jsonb_build_object('kind','order','customer_id',cid,'quote_id',quote,'title','Accepted quote order fixture','document_date','2026-10-23','currency',doc->>'currency','discount_minor',doc->'discount_minor','tax_bps',doc->'tax_bps','lines',doc->'items');
+ c=public.work_business(jsonb_build_object('command','commercial_save','request_key',gen_random_uuid(),'version',0,'data',order_data));
+ perform public.work_business(jsonb_build_object('command','commercial_issue','id',c->>'id','version',1,'reason','First accepted quote conversion'));
+ c=public.work_business(jsonb_build_object('command','commercial_save','request_key',gen_random_uuid(),'version',0,'data',order_data));
+ refused=false;begin perform public.work_business(jsonb_build_object('command','commercial_issue','id',c->>'id','version',1,'reason','Duplicate accepted quote conversion'));exception when raise_exception then refused=true;end;
+ if not refused or (select count(*) from public.work_commercial where quote_id=quote and status='issued')<>1 then raise exception 'Accepted quotation issued as multiple orders';end if;
+
  refused=false;begin perform public.work_customer_portal(repeat('b',64),jsonb_build_object('action','document','share_id',gen_random_uuid(),'session_hash',repeat('c',64)));exception when insufficient_privilege then refused=true;end;if not refused then raise exception 'Portal arbitrary share access';end if;
  perform public.work_business(jsonb_build_object('command','portal_admin','action','member','customer_id',cid,'email','portal-fixture@example.invalid','active',false));
  c=public.work_customer_portal(repeat('b',64),jsonb_build_object('action','state','session_hash',repeat('c',64)));

@@ -167,7 +167,9 @@ policies, not a provider-level Auth disaster recovery exercise.
 
 ## Verification record — 23 October 2026
 
-- Applied production migrations `20261023192159` and `20261023192723`.
+- Applied production migrations `20261023192159`, `20261023192723` and
+  `20261023193618`. The final guard permits one issued order per accepted
+  quotation and serializes concurrent conversions.
 - Actual-project business/access fixtures passed and rolled back.
 - Strict types, 22 unit checks, full database/recovery suite and four private
   browser suites passed. Public packaging/content/interaction checks passed.
@@ -175,6 +177,10 @@ policies, not a provider-level Auth disaster recovery exercise.
 - Supabase security advisor: no new schema warnings; the existing leaked-password
   setting remains open. Performance checks no longer report unindexed foreign
   keys, repeated auth initplans or overlapping document SELECT policies.
+- The Vercel production deployment is READY for both projects. Live checks
+  confirm public routing, protected workspace/API denials, customer portal
+  entry, signed-event rejection and the authorized encrypted-backup copy
+  endpoint. The post-deployment error/fatal log scan returned no entries.
 - A real signed-in owner business pilot remains separate from fixture tests.
 
 ## Remaining owner/provider configuration
