@@ -113,7 +113,7 @@
    for(let i=0;i<steps.length;i++){const invalid=firstInvalid(steps[i]);if(invalid){e.preventDefault();showStep(i);flagInvalid(invalid);return}}
    // Invalid list quantities in an open drawer must not silently enter the email.
    if(dialog.open&&$$('[data-item-quantity]',dialog).some(input=>!input.checkValidity())){e.preventDefault();return}
-   renderReview();let stamp=form.querySelector('[name="privacy_acknowledged_at"]');if(!stamp){stamp=document.createElement('input');stamp.type='hidden';stamp.name='privacy_acknowledged_at';form.append(stamp)}stamp.value=new Date().toISOString();busy=true;submit.disabled=true;submit.textContent='Continue to verification…';
+   renderReview();let stamp=form.querySelector('[name="privacy_acknowledged_at"]');if(!stamp){stamp=document.createElement('input');stamp.type='hidden';stamp.name='privacy_acknowledged_at';form.append(stamp)}stamp.value=new Date().toISOString();let key=form.querySelector('[name="request_key"]');if(!key){key=document.createElement('input');key.type='hidden';key.name='request_key';key.value=crypto.randomUUID();form.append(key)}busy=true;submit.disabled=true;submit.textContent='Sending your enquiry…';
   });
   addEventListener('pageshow',()=>{busy=false;submit.disabled=false;submit.textContent='Submit quote request'});
  }

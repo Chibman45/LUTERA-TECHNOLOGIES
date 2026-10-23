@@ -15,7 +15,7 @@ for(const form of document.querySelectorAll('form:not(#rfq-form)')){
   if(!form.reportValidity()){e.preventDefault();return}
   let stamp=form.querySelector('[name="privacy_acknowledged_at"]');
   if(!stamp){stamp=document.createElement('input');stamp.type='hidden';stamp.name='privacy_acknowledged_at';form.append(stamp)}
-  stamp.value=new Date().toISOString();busy=true;button.disabled=true;button.textContent='Continue to verification…';
+  stamp.value=new Date().toISOString();let key=form.querySelector('[name="request_key"]');if(!key){key=document.createElement('input');key.type='hidden';key.name='request_key';key.value=crypto.randomUUID();form.append(key)}busy=true;button.disabled=true;button.textContent='Sending your enquiry…';
  });
  window.addEventListener('pageshow',()=>{busy=false;button.disabled=false;button.textContent='Send message'});
 }

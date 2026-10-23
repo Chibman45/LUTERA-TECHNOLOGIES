@@ -21,7 +21,7 @@ PAGE_META={
  'privacy':('Privacy Notice | LUTERA Technologies','Learn how LUTERA handles contact and quote enquiries, functional equipment-list storage, email processing, privacy questions and data requests.'),
  'terms':('Website & Enquiry Terms | LUTERA Technologies','Read the terms for using the LUTERA website and sending enquiries, including quotation scope, equipment availability and written supply agreements.'),
  'cookies':('Cookies & Browser Storage | LUTERA Technologies','Understand functional session storage, the equipment enquiry list and third-party form processing on the LUTERA Technologies website.'),
- 'thank-you':('Enquiry Submitted | LUTERA Technologies','Your enquiry has been submitted through our email form service. Find direct email and WhatsApp contact details for LUTERA Technologies.'),
+ 'thank-you':('Enquiry Submitted | LUTERA Technologies','Your enquiry has been received by Lutera. Find direct email and WhatsApp contact details for LUTERA Technologies.'),
  '404':('Page Not Found | LUTERA Technologies','The requested LUTERA page could not be found. Explore our IT, AI and hardware services or return to the homepage.'),
 }
 SERVICE_NAMES={

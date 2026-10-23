@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { database } from "@/lib/supabase";
@@ -70,6 +71,7 @@ const check = <T>(result: {
   if (result.error) {
     const message = result.error.message;
     const safe = [
+      "BUSINESS:",
       "Draft changed",
       "Issued records",
       "Voided records",
@@ -91,7 +93,7 @@ const check = <T>(result: {
     ];
     throw new Failure(
       safe.some((prefix) => message.startsWith(prefix))
-        ? message
+        ? message.replace(/^BUSINESS: /, "")
         : "The operation could not be completed. Refresh and check your access and entered details.",
       result.error.code === "42501" ? 403 : 400,
     );
@@ -1031,12 +1033,20 @@ export async function POST(
           );
         photos[file] = Buffer.from(await data.arrayBuffer()).toString("base64");
       }
+      const files: Record<string,string>={};
+      const backupAuth=await db.auth.getSession();
+      const backupSession=backupAuth.data.session;
+      if(!backupSession)throw new Failure('Sign in again before creating a backup.',401);
+      const backupStorage=createClient(process.env.SUPABASE_URL!,process.env.SUPABASE_PUBLISHABLE_KEY!,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:'Bearer '+backupSession.access_token,'x-lutera-backup-proof':process.env.BUSINESS_JOB_SECRET||''}}});
+      const manifests=[...(snapshot.work_files||[]).map((f:{path:string})=>({bucket:'work-evidence',path:f.path})),...(snapshot.work_profiles||[]).filter((p:{avatar_path:string})=>p.avatar_path).map((p:{avatar_path:string})=>({bucket:'work-avatars',path:p.avatar_path}))];
+      for(const f of manifests){const file=check(await backupStorage.storage.from(f.bucket).download(f.path));size+=file.size;if(size>40000000)throw new Failure('Use the full database and storage backup procedure for this archive.',413);files[f.bucket+'/'+f.path]=Buffer.from(await file.arrayBuffer()).toString('base64')}
       const bytes = await encryptBackup(
         {
           format: "lutera-records-v1",
           created_at: new Date().toISOString(),
           data: snapshot,
           photos,
+          files,
         },
         body.password,
       );

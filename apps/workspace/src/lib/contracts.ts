@@ -187,6 +187,9 @@ export const documentSchema = z
     payment_method: text(100),
     payment_reference: text(160),
     payment_confirmed: z.boolean(),
+    evidence_id: z.union([z.literal(""), uuid]).optional(),
+    customer_id: z.union([z.literal(""), uuid]).optional(),
+    request_key: uuid.optional(),
     source_id: z.union([z.literal(""), uuid]),
   })
   .strict()

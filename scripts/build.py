@@ -1,4 +1,4 @@
-"""Build the public, database-free Lutera website from shared content and templates."""
+"""Build the static public Lutera website from shared content and templates."""
 from pathlib import Path
 from html import escape
 from hashlib import sha256
@@ -139,6 +139,22 @@ pages['404']=('Page not found',pagehero('A different<br>way forward.','This page
 pages=enhance(pages,BASE,FORM_ORIGIN,icon,eye,btn,pagehero,cta)
 pages['']=(pages[''][0],pages[''][1].replace(cta(),commitments(BASE)+cta()))
 pages=add_digital_pages(pages,BASE,pagehero,icon)
+
+# The public pages stay static. New enquiries are persisted by the separate
+# private application before a success redirect. This override provides a
+# controlled fallback during a backend outage.
+if os.environ.get('LUTERA_ENQUIRY_TRANSPORT', 'workspace') == 'workspace':
+    for route,(title,body) in list(pages.items()):
+        body=re.sub(r'action="https://formsubmit\.co/[^"]+"', 'action="https://workspace.luteratech.com/api/enquiry"', body)
+        body=body.replace('If you completed the form service’s verification, your enquiry has been submitted for processing.', 'Your enquiry has been received.')
+        body=body.replace('If you need to follow up or did not finish the form service’s check, contact us directly using the details here.', 'If you need to follow up, contact us using the details here.')
+        body=body.replace('Both forms send the submitted fields to FormSubmit, which processes them and routes them to chimaster010@gmail.com. FormSubmit is a third-party form service, not a database operated by LUTERA. It may retain submissions or technical logs under its own policy. Review <a href="https://formsubmit.co/privacy.pdf" target="_blank" rel="noopener noreferrer">FormSubmit’s privacy policy</a>. Its spam-prevention checks may use Google reCAPTCHA. Email is processed by Google’s Gmail service.', 'Enquiries are saved in Lutera’s private business workspace, hosted through Vercel and Supabase. Authorized staff use them to respond to your request. Resend delivers business notifications and emails; replies to our monitored inbox are processed by Google’s Gmail service.')
+        body=body.replace('Enquiries are reviewed through the business email inbox.', 'Enquiries are reviewed by authorized staff in the private business workspace.')
+        body=body.replace('No private customer account or RFQ database is operated by this website.', 'Approved customers may separately access explicitly shared documents through the customer portal. Staff access and customer access are separate.')
+        body=body.replace('Sending a form takes you to FormSubmit for processing and spam prevention. Its service and Google reCAPTCHA may use cookies or similar technology. Read <a href="https://formsubmit.co/privacy.pdf" target="_blank" rel="noopener noreferrer">FormSubmit’s privacy policy</a> for details.', 'Public forms send your enquiry to Lutera’s private business system. The customer portal uses a secure session cookie after you explicitly sign in; it is not an advertising or analytics cookie.')
+        body=body.replace('Spam-prevention services may use their own cookies on the submission page. Last updated: 21 October 2026.', 'The separately accessed customer portal uses a secure session cookie. Last updated: 23 October 2026.')
+        pages[route]=(title,body)
+
 
 def copy_style(markup):
     # Change visible copy only. Existing form IDs and transport field names stay stable.

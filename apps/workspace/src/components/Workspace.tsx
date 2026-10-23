@@ -13,6 +13,10 @@ import Documents from "./documents";
 import StaffCards from "./staff";
 import ContentEditor from "./content";
 import Account from "./Account";
+import BusinessActivity from "./BusinessActivity";
+import BusinessReports from "./BusinessReports";
+import BusinessAdministration from "./BusinessAdministration";
+import BusinessWorkspace, { BusinessDashboard } from "./BusinessWorkspace";
 import PasswordInput from "./PasswordInput";
 import { api, saveFile } from "@/lib/client";
 export { api, saveFile } from "@/lib/client";
@@ -68,6 +72,7 @@ export default function Workspace() {
     [loading, setLoading] = useState(true),
     [data, setData] = useState<State | null>(null),
     [tab, setTab] = useState("overview"),
+    [documentId, setDocumentId] = useState<string | undefined>(undefined),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const activeSession = useRef<Session | null>(null);
@@ -88,7 +93,24 @@ export default function Workspace() {
           new URLSearchParams(window.location.search).get("account") ===
             "password"
             ? "account"
-            : "overview",
+            : [
+                  "operations",
+                  "reports",
+                  "content",
+                  "finance",
+                  "staff",
+                  "settings",
+                  "business-settings",
+                  "members",
+                  "audit",
+                  "backup",
+                  "account",
+                ].includes(
+                  new URLSearchParams(window.location.search).get("section") ||
+                    "",
+                )
+              ? new URLSearchParams(window.location.search).get("section")!
+              : "overview",
         );
         await refresh();
       }
@@ -113,6 +135,15 @@ export default function Workspace() {
       document.removeEventListener("visibilitychange", visible);
     };
   }, [checkSession]);
+  useEffect(() => {
+    if (!session?.verified) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("section", tab);
+    if (tab !== "operations")
+      for (const key of ["module", "kind", "record"])
+        url.searchParams.delete(key);
+    history.replaceState(null, "", url.pathname + url.search);
+  }, [tab, session?.verified]);
   async function signout() {
     if (!mayLeave()) return;
     setBusy(true);
@@ -132,10 +163,13 @@ export default function Workspace() {
   const tabs = [
     ["overview", "Overview"],
     ["account", "My account"],
+    ["operations", "Business operations"],
+    ["reports", "Management reports"],
     ["content", "Website"],
     ["finance", "Documents"],
     ["staff", "Staff & cards"],
     ["settings", "Company settings"],
+    ["business-settings", "Operations settings"],
     ["members", "Access"],
     ["audit", "Activity"],
     ["backup", "Backups"],
@@ -143,7 +177,10 @@ export default function Workspace() {
     ([area]) =>
       area === "overview" ||
       area === "account" ||
-      (session && can(session.role, area)),
+      area === "operations" ||
+      (area === "reports" && !!session && can(session.role, "finance")) ||
+      (session &&
+        can(session.role, area === "business-settings" ? "members" : area)),
   );
   if (loading)
     return (
@@ -227,8 +264,17 @@ export default function Workspace() {
             <Notice>Loading your records…</Notice>
           ) : (
             <>
+              {tab === "operations" && (
+                <BusinessWorkspace
+                  onOpenDocument={(id) => {
+                    setDocumentId(id);
+                    setTab("finance");
+                  }}
+                />
+              )}
               {tab === "overview" && (
                 <>
+                  <BusinessDashboard onOpen={() => setTab("operations")} />
                   <div className="stat-grid">
                     {[
                       ["Recent documents", data.documents.length],
@@ -278,6 +324,7 @@ export default function Workspace() {
               )}
               {tab === "finance" && (
                 <Documents
+                  initialId={documentId}
                   records={data.documents}
                   settings={data.settings!.payload}
                   refresh={refresh}
@@ -299,47 +346,18 @@ export default function Workspace() {
                 />
               )}
               {tab === "settings" && (
-                <SettingsEditor initial={data.settings!} refresh={refresh} />
+                <SettingsEditor
+                  owner={session.role === "owner"}
+                  initial={data.settings!}
+                  refresh={refresh}
+                />
               )}
               {tab === "members" && (
                 <Members records={data.members} refresh={refresh} />
               )}
-              {tab === "audit" && (
-                <section className="panel">
-                  <h2>Recent activity</h2>
-                  <p>
-                    Latest 200 events. Full history is included in the owner’s
-                    encrypted backup.
-                  </p>
-                  <div className="table-scroll">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>When</th>
-                          <th>Action</th>
-                          <th>Record</th>
-                          <th>Actor</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.audit.map((a) => (
-                          <tr key={a.id}>
-                            <td>{new Date(a.created_at).toLocaleString()}</td>
-                            <td>{a.action.replaceAll("_", " ")}</td>
-                            <td>
-                              {a.entity}
-                              <small>{a.entity_id}</small>
-                            </td>
-                            <td>
-                              <small>{a.actor}</small>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-              )}
+              {tab === "audit" && <BusinessActivity />}
+              {tab === "business-settings" && <BusinessAdministration />}
+              {tab === "reports" && <BusinessReports />}
               {tab === "backup" && <Backups />}
               {tab === "account" && <Account session={session} />}
             </>
@@ -578,9 +596,11 @@ function MFA({
   );
 }
 function SettingsEditor({
+  owner,
   initial,
   refresh,
 }: {
+  owner: boolean;
   initial: { payload: Settings; version: number };
   refresh: () => Promise<void>;
 }) {
@@ -634,6 +654,7 @@ function SettingsEditor({
           <Field key={key} label={key.replaceAll("_", " ") + " (optional)"}>
             <input
               value={value[key]}
+              disabled={!owner}
               maxLength={160}
               onChange={(e) => setValue({ ...value, [key]: e.target.value })}
             />
@@ -642,6 +663,7 @@ function SettingsEditor({
         <Field label="Default currency">
           <select
             value={value.currency}
+            disabled={!owner}
             onChange={(e) =>
               setValue({
                 ...value,

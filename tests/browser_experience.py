@@ -103,15 +103,15 @@ with sync_playwright() as p:
  captured=[]
  def intercept(route):
   captured.append(parse_qs(route.request.post_data));route.fulfill(status=200,content_type='text/html',body='<h1>Mock provider; no email was sent</h1>')
- q.route('https://formsubmit.co/**',intercept)
- q.locator('#rfq-submit').click();q.wait_for_url('https://formsubmit.co/**')
+ q.route('https://workspace.luteratech.com/api/enquiry',intercept)
+ q.locator('#rfq-submit').click();q.wait_for_url('https://workspace.luteratech.com/api/enquiry')
  payload=captured[-1];assert payload['equipment_list'][0].replace('\r\n','\n')=='Business laptops: 5\nServers & storage: 1',payload
  assert payload['quantity']==['6'];assert payload['email']==['qa@example.com'];assert payload['privacy_acknowledged_at'];assert 'New office setup' in payload['enquiry_summary'][0]
  # Free text and contact information never enter session storage.
  saved=q.evaluate("sessionStorage.getItem('lutera_equipment_v1')") if q.url.startswith(base) else None
  visit(q,base+'contact/',wait_until='networkidle')
  saved=q.evaluate("sessionStorage.getItem('lutera_equipment_v1')");assert 'qa@example.com' not in saved;assert 'QA tester' not in saved
- q.locator('#name').fill('QA tester');q.locator('#email').fill('qa@example.com');q.locator('#message').fill('QA ONLY: verify contact transport; do not send.');q.get_by_role('checkbox').check();q.get_by_role('button',name='Send message').click();q.wait_for_url('https://formsubmit.co/**');assert captured[-1]['message']
+ q.locator('#name').fill('QA tester');q.locator('#email').fill('qa@example.com');q.locator('#message').fill('QA ONLY: verify contact transport; do not send.');q.get_by_role('checkbox').check();q.get_by_role('button',name='Send message').click();q.wait_for_url('https://workspace.luteratech.com/api/enquiry');assert captured[-1]['message']
  # Solutions include every service group; digital and consulting/support links preselect the requested work.
  for category in ['ai','software','data','cloud','consulting','support']:
   visit(q,base+'solutions/',wait_until='domcontentloaded')

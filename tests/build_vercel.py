@@ -59,7 +59,7 @@ def check(settings, canonical, callback, preview):
         excluded = preview or relative in ('404.html', 'thank-you/index.html')
         assert ('noindex' in page.robots) == excluded, path
         for form in page.forms:
-            assert form['action'] == 'https://formsubmit.co/chimaster010@gmail.com'
+            assert form['action'] == 'https://workspace.luteratech.com/api/enquiry'
             assert form['method'].upper() == 'POST'
         assert len(page.returns) == len(page.forms)
         assert all(url == callback + '/thank-you/' for url in page.returns)

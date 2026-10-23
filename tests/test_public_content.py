@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='lutera-cms-test-') as tmp:
  assert 'Two services.' in home and 'AI &amp; workflow &lt;review&gt;' in home
  assert 'Company profile' in home and 'view=lutera&amp;source=website' in home
  quote=(output/'request-quote/index.html').read_text()
- assert 'https://formsubmit.co/fixture@example.invalid' in quote
+ assert 'https://workspace.luteratech.com/api/enquiry' in quote and 'fixture@example.invalid' in quote
  assert 'https://wa.me/2348012345678' in quote
  assert '<option value="new-service">Custom service</option>' in quote
  detail=(output/'services/new-service/index.html').read_text()

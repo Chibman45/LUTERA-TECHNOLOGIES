@@ -128,7 +128,7 @@ def main():
             if len(page.forms) != expected_forms or page.returns != [origin + '/thank-you/'] * expected_forms:
                 failures.append('incorrect form count or return URL')
             for form in page.forms:
-                if form.get('method', '').upper() != 'POST' or form.get('action') != 'https://formsubmit.co/' + SITE['company']['email']:
+                if form.get('method', '').upper() != 'POST' or form.get('action') != 'https://workspace.luteratech.com/api/enquiry':
                     failures.append('unexpected enquiry transport')
         except (OSError, ValueError) as error:
             failures.append(str(error))

@@ -12,6 +12,7 @@ import {
 import { api, Field, Notice, saveFile } from "./Workspace";
 import { useUnsavedChanges } from "@/lib/unsaved";
 import { useRecords, Pagination } from "./records";
+import { Evidence } from "./business-fields";
 const today = () => new Date().toISOString().slice(0, 10);
 const inputOf = (record: BusinessDocument) => {
   const input = { ...record.payload };
@@ -41,7 +42,9 @@ export default function Documents({
   records,
   settings,
   refresh,
+  initialId,
 }: {
+  initialId?: string;
   records: BusinessDocument[];
   settings: Settings;
   refresh: () => Promise<void>;
@@ -53,6 +56,12 @@ export default function Documents({
     [search, setSearch] = useState(""),
     [filter, setFilter] = useState("all"),
     [searchBy, setSearchBy] = useState<"name" | "number">("name");
+  useEffect(() => {
+    if (initialId)
+      api<BusinessDocument>("business/legacy-document?id=" + initialId)
+        .then(setSelected)
+        .catch(() => {});
+  }, [initialId]);
   const listing = useRecords({
     area: "finance",
     initial: records,
@@ -205,7 +214,7 @@ export default function Documents({
     </>
   );
 }
-function Editor({
+export function Editor({
   record,
   settings,
   kind,
@@ -213,7 +222,9 @@ function Editor({
   onBack,
   onSaved,
   onDeleted,
+  business = false,
 }: {
+  business?: boolean;
   record: BusinessDocument | null;
   settings: Settings;
   kind: DocumentInput["kind"];
@@ -320,10 +331,13 @@ function Editor({
     setBusy(true);
     setMessage("");
     try {
-      const next = await api<BusinessDocument>("documents/save", {
-        ...(record ? { id: record.id, version: record.version } : {}),
-        payload: payload(),
-      });
+      const next = await api<BusinessDocument>(
+        business ? "business/quote-save" : "documents/save",
+        {
+          ...(record ? { id: record.id, version: record.version } : {}),
+          payload: payload(),
+        },
+      );
       setDirty(false);
       await onSaved(next);
       setMessage("Draft saved. Review it before issuing.");
@@ -338,12 +352,15 @@ function Editor({
     setBusy(true);
     setMessage("");
     try {
-      const next = await api<BusinessDocument>("documents/status", {
-        id: record.id,
-        version: record.version,
-        action,
-        ...(reason ? { reason } : {}),
-      });
+      const next = await api<BusinessDocument>(
+        business ? "business/quote-status" : "documents/status",
+        {
+          id: record.id,
+          version: record.version,
+          action,
+          ...(reason ? { reason } : {}),
+        },
+      );
       setConfirm(null);
       if (action === "delete") await onDeleted();
       else await onSaved(next);
@@ -363,7 +380,11 @@ function Editor({
     setBusy(true);
     setMessage("");
     try {
-      await saveFile("export", { entity: "document", id: record.id, format });
+      await saveFile(business ? "business/quote-export" : "export", {
+        entity: "document",
+        id: record.id,
+        format,
+      });
     } catch (error) {
       setMessage((error as Error).message);
     } finally {
@@ -513,6 +534,15 @@ function Editor({
                   />
                 </Field>
               </div>
+              <label className="field">
+                <span>Payment evidence *</span>
+                <Evidence
+                  value={doc.evidence_id || ""}
+                  onChange={(v) => update("evidence_id", v)}
+                  area="finance"
+                  required={!locked}
+                />
+              </label>
               <label className="check">
                 <input
                   type="checkbox"
@@ -665,7 +695,7 @@ function Editor({
               Review & issue
             </button>
           )}
-          {record?.status === "draft" && (
+          {record?.status === "draft" && !business && (
             <button
               type="button"
               className="danger secondary"

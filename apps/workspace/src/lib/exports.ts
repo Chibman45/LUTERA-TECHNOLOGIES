@@ -40,6 +40,12 @@ const escape = (s: string) =>
   );
 const title = (kind: string) =>
   ({
+    order: "Sales order",
+    invoice: "Sales invoice",
+    credit: "Credit note",
+    purchase: "Purchase order",
+    rfq: "Request for quotation",
+    delivery: "Delivery note",
     quotation: "Quotation",
     proforma: "Pro forma invoice",
     receipt: "Payment receipt",
@@ -128,7 +134,9 @@ export async function financialExport(
           "This document records payment confirmed by Lutera. It is not an online payment confirmation.",
         ]
       : [
-          "This document is a quotation/pro forma, not a payment receipt. Supply and delivery are subject to the agreed terms.",
+          ["quotation", "proforma"].includes(doc.kind)
+            ? "Supply and delivery are subject to the agreed terms."
+            : "Please retain this numbered document for your records.",
         ]),
   ];
   const brand = await logo();
@@ -261,7 +269,7 @@ export async function financialExport(
       `${company.company.address}\n${company.company.email} | ${company.company.phone}\n${company.company.website}`,
     );
     paragraph(
-      `Date: ${doc.date}${doc.valid_until ? "   Valid until: " + doc.valid_until : ""}   Currency: ${doc.currency}`,
+      `Date: ${doc.date}${doc.valid_until ? (String(doc.kind) === "invoice" ? "   Due date: " : "   Valid until: ") + doc.valid_until : ""}   Currency: ${doc.currency}`,
     );
     paragraph("Bill to / Received from", 10, true);
     paragraph(
@@ -375,7 +383,7 @@ export async function financialExport(
               `${company.company.email} | ${company.company.phone} | ${company.company.website}`,
             ),
             paragraph(
-              `Date: ${doc.date}${doc.valid_until ? " | Valid until: " + doc.valid_until : ""} | Currency: ${doc.currency}`,
+              `Date: ${doc.date}${doc.valid_until ? (String(doc.kind) === "invoice" ? " | Due date: " : " | Valid until: ") + doc.valid_until : ""} | Currency: ${doc.currency}`,
             ),
             paragraph("Bill to / Received from", true),
             ...[
@@ -430,7 +438,7 @@ export async function financialExport(
   add(company.company.address);
   add(`${company.company.email} | ${company.company.phone}`);
   add(
-    `Date: ${doc.date}${doc.valid_until ? " | Valid until: " + doc.valid_until : ""} | ${doc.currency}`,
+    `Date: ${doc.date}${doc.valid_until ? (String(doc.kind) === "invoice" ? " | Due date: " : " | Valid until: ") + doc.valid_until : ""} | ${doc.currency}`,
   );
   add("Bill to / Received from", 70, 20, true);
   add(

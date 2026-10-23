@@ -18,7 +18,7 @@ reset role;
 select set_config('request.jwt.claims',json_build_object('sub',owner_id,'aal','aal2','session_id',session_id)::text,true) from work_test_ids;
 set local role authenticated;
 do $$
-declare payload jsonb; quote_id uuid; quote_number text; receipt_id uuid; refused boolean; amount bigint; new_revision uuid; staff_id uuid;
+declare payload jsonb; quote_id uuid; quote_number text; receipt_id uuid; refused boolean; amount bigint; new_revision uuid; staff_id uuid; evidence uuid=gen_random_uuid(); owner_uid uuid=auth.uid();
 begin
  if not public.work_has_access('finance') then raise exception 'Owner AAL2 denied'; end if;
  payload='{"kind":"quotation","customer":{"name":"Fixture Customer","email":"","phone":"","address":""},"date":"2026-10-22","valid_until":"","currency":"NGN","items":[{"description":"TEST ONLY","quantity":3,"unit_minor":10001}],"discount_minor":3,"tax_bps":750,"notes":"","payment_method":"","payment_reference":"","payment_confirmed":false,"source_id":""}'::jsonb;
@@ -33,7 +33,9 @@ begin
  if not refused then raise exception 'Issued record was editable';end if;
  refused=false;begin delete from public.work_documents where id=quote_id;exception when raise_exception then refused=true;end;
  if not refused then raise exception 'Issued record was deletable';end if;
- payload=payload||jsonb_build_object('kind','receipt','items',jsonb_build_array(jsonb_build_object('description','Fixture receipt','quantity',1,'unit_minor',10000)),'discount_minor',0,'tax_bps',0,'source_id',quote_id,'payment_method','Test fixture','payment_confirmed',true);
+ perform public.work_business(jsonb_build_object('command','misc','action','file','id',evidence,'area','finance','name','Fixture evidence','path',owner_uid::text||'/'||evidence||'.jpg','size',10,'sha256',repeat('a',64)));
+ insert into storage.objects(bucket_id,name) values('work-evidence',owner_uid::text||'/'||evidence||'.jpg');
+ payload=payload||jsonb_build_object('evidence_id',evidence,'kind','receipt','items',jsonb_build_array(jsonb_build_object('description','Fixture receipt','quantity',1,'unit_minor',10000)),'discount_minor',0,'tax_bps',0,'source_id',quote_id,'payment_method','Test fixture','payment_confirmed',true);
  insert into public.work_documents(kind,payload) values('receipt',payload) returning id into receipt_id;
  update public.work_documents set status='issued' where id=receipt_id;
  refused=false;begin update public.work_documents d set status='void',payload=d.payload||'{"void_reason":"Fixture cancellation"}'::jsonb where id=quote_id;exception when raise_exception then refused=true;end;
