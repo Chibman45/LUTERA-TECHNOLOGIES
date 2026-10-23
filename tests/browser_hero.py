@@ -34,23 +34,7 @@ with sync_playwright() as p:
   seen.add(active.get_attribute('src'))
  assert len(seen)==3,seen
  assert active.get_attribute('src')==initial_src
- # A plain footer setting provides a keyboard-accessible motion preference.
- pause=q.locator('[data-motion-toggle]')
- pause.click();assert pause.get_attribute('aria-pressed')=='true'
- assert pause.inner_text()=='Resume background animation'
- q.evaluate('scrollTo(0,0)')
- q.wait_for_function('document.querySelector("[data-hero]").dataset.motion==="paused"')
- active.evaluate('async (e)=>{await Promise.all(e.getAnimations().map(a=>a.ready))}')
- pan_state='(e)=>{const pan=e.getAnimations().find(a=>a.animationName==="hero-photo-pan");return {state:pan.playState,time:pan.currentTime}}'
- frozen=active.evaluate(pan_state);paused_src=active.get_attribute('src')
- assert frozen['state']=='paused',frozen
- q.wait_for_timeout(8500)
- assert active.get_attribute('src')==paused_src
- assert frozen==active.evaluate(pan_state),(frozen,active.evaluate(pan_state))
- pause.focus();q.keyboard.press('Enter');assert pause.get_attribute('aria-pressed')=='false'
- q.evaluate('scrollTo(0,0)')
- q.wait_for_function('document.querySelector("[data-hero]").dataset.motion==="running"')
- assert pause.inner_text()=='Pause background animation'
+ assert q.locator('[data-motion-toggle]').count()==0
  q.locator('.enquiry-nav').click();q.wait_for_function('document.querySelector("[data-hero]").dataset.motion==="paused"')
  q.keyboard.press('Escape');q.wait_for_function('document.querySelector("[data-hero]").dataset.motion==="running"')
  q.locator('#our-services').scroll_into_view_if_needed();q.evaluate('scrollBy(0,300)')
@@ -58,12 +42,11 @@ with sync_playwright() as p:
  q.evaluate('scrollTo(0,0)');q.wait_for_function('document.querySelector("[data-hero]").dataset.motion==="running"')
  # Changing the operating-system preference immediately suspends motion.
  q.emulate_media(reduced_motion='reduce');q.wait_for_function('document.querySelector("[data-hero]").dataset.motion==="paused"')
- assert not pause.is_visible()
  for width,height in [(320,740),(390,844),(768,1024),(1024,768),(1191,668),(1440,1000)]:
   q.set_viewport_size({'width':width,'height':height});q.evaluate('scrollTo(0,0)')
   assert q.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
   box=hero.bounding_box()
-  for selector in ['h1','.hero-copy>p','.hero-panel h2','.hero-panel p','.hero-photo-note']:
+  for selector in ['h1','.hero-copy>p','.hero-panel h2','.hero-panel p']:
    text=hero.locator(selector);rect=text.bounding_box()
    assert text.is_visible() and rect['x']>=0 and rect['x']+rect['width']<=width+1,(width,selector,rect)
    assert rect['y']>=box['y'] and rect['y']+rect['height']<=box['y']+box['height']+1,(width,selector)
@@ -77,7 +60,7 @@ with sync_playwright() as p:
   assert r.locator('.hero-slide').evaluate('(e)=>e.complete&&e.naturalWidth>0')
   assert r.evaluate('document.getAnimations().filter(a=>a.playState==="running").length')==0
   assert not any('hero-support-' in url or 'hero-cloud-' in url for url in requests),(mode,requests)
-  assert not r.locator('[data-motion-toggle]').is_visible()
+  assert r.locator('[data-motion-toggle]').count()==0
   if mode!='no-js':assert r.locator('[data-hero]').get_attribute('data-motion')=='paused'
   context.close()
  # Failed downloads retain the valid image, then continue with the next scene.
@@ -95,4 +78,4 @@ with sync_playwright() as p:
  assert r.locator('.hero-slide.is-active').evaluate('(e)=>e.complete&&e.naturalWidth>0')
  fail.close();assert not errors,errors;b.close()
 if server:server.shutdown()
-print('PASS hero: automatic three-photo loop, real pan/crossfade, footer pause/resume, offscreen/modal suspension, dynamic reduced motion, save-data/no-JS still images, failed-image recovery, readable text and 320–1440px layouts.')
+print('PASS hero: automatic three-photo loop without controls, real pan/crossfade, offscreen/modal suspension, dynamic reduced motion, save-data/no-JS still images, failed-image recovery, readable text and 320–1440px layouts.')

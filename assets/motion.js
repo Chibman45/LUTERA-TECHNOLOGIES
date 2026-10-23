@@ -10,19 +10,14 @@
  if(!Array.isArray(scenes)||scenes.length<2)return;
  const reduce=matchMedia('(prefers-reduced-motion: reduce)');
  const connection=navigator.connection;
- const pause=document.querySelector('[data-motion-toggle]');
  const enquiry=document.querySelector('#enquiry-dialog');
  const images=new Map([[0,media.querySelector('img')]]);
- let nextScene=1,userPaused=false,inView=true,timer=null,busy=false;
+ let nextScene=1,inView=true,timer=null,busy=false;
  const canAnimate=()=>!reduce.matches&&!connection?.saveData;
- const canRun=()=>canAnimate()&&!userPaused&&!document.hidden&&inView&&!enquiry?.open;
+ const canRun=()=>canAnimate()&&!document.hidden&&inView&&!enquiry?.open;
  function update(){
   clearTimeout(timer);timer=null;
   const running=canRun();hero.dataset.motion=running?'running':'paused';
-  if(pause){
-   pause.hidden=!canAnimate();pause.setAttribute('aria-pressed',String(userPaused));
-   pause.textContent=userPaused?'Resume background animation':'Pause background animation';
-  }
   if(running&&!busy)timer=setTimeout(showNext,8000);
  }
  async function load(index){
@@ -44,14 +39,13 @@
   busy=true;clearTimeout(timer);
   try{
    await load(index);
-   // A download finishing after the visitor pauses must not switch images.
+   // A download finishing after motion is suspended must not switch images.
    if(!canRun())return;
    for(const [key,image] of images)image.classList.toggle('is-active',key===index);
   }catch{
    // Preserve the current photo and try the following scene on the next cycle.
   }finally{busy=false;update()}
  }
- pause?.addEventListener('click',()=>{userPaused=!userPaused;update()});
  document.addEventListener('visibilitychange',update);
  window.addEventListener('pagehide',()=>clearTimeout(timer));
  window.addEventListener('pageshow',update);
