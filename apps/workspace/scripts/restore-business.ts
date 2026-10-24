@@ -52,6 +52,19 @@ export const restoreOrder = [
   "work_case_templates",
   "work_case_events",
   "work_case_changes",
+  "work_locations",
+  "work_inspections",
+  "work_stock_holds",
+  "work_order_progress",
+  "work_order_cancellations",
+  "work_maintenance_visits",
+  "work_supplier_bank",
+  "work_cost_allocations",
+  "work_operating_policy",
+  "work_acceptance_requests",
+  "work_portal_evidence",
+  "work_shipments",
+  "work_approval_rules",
   "work_audit",
 ];
 const literal = (value: unknown) =>
@@ -77,8 +90,11 @@ export function recoverySQL(snapshot: Record<string, unknown>) {
     "work_members",
     "work_automation",
     "work_calendar",
+    "work_operating_policy",
   ];
-  for (const table of seedTables) commands.push(`DELETE FROM public.${table};`);
+  for (const table of seedTables)
+    if (Array.isArray(snapshot[table]))
+      commands.push(`DELETE FROM public.${table};`);
   for (const table of restoreOrder) {
     if (!Array.isArray(snapshot[table])) continue;
     const records = structuredClone(snapshot[table]) as Record<
@@ -91,6 +107,10 @@ export function recoverySQL(snapshot: Record<string, unknown>) {
       if (table === "work_automation") {
         row.invoice_reminders = false;
         row.maintenance_reminders = false;
+        row.enquiry_reminders = false;
+        row.warranty_reminders = false;
+        row.visit_reminders = false;
+        row.delivery_notices = false;
       }
       if (
         table === "work_messages" &&
@@ -105,7 +125,12 @@ export function recoverySQL(snapshot: Record<string, unknown>) {
       `INSERT INTO public.${table} OVERRIDING SYSTEM VALUE SELECT * FROM jsonb_populate_recordset(NULL::public.${table},${literal(records)});`,
     );
   }
-  for (const table of ["work_counters", "work_requests"]) {
+  for (const table of [
+    "work_counters",
+    "work_requests",
+    "work_ops_requests",
+    "work_message_statements",
+  ]) {
     const records = snapshot["private." + table];
     if (!Array.isArray(records)) continue;
     commands.push(
@@ -142,7 +167,12 @@ async function main() {
   const files = snapshot.storage_files || [];
   for (const file of files) {
     if (
-      !["work-evidence", "work-staff", "work-avatars"].includes(file.bucket) ||
+      ![
+        "work-evidence",
+        "work-staff",
+        "work-avatars",
+        "work-portal-evidence",
+      ].includes(file.bucket) ||
       !file.path ||
       file.path.startsWith("/") ||
       file.path

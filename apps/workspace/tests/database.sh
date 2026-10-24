@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 container="lutera-workspace-test-${RANDOM}"
 trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
-docker run --rm --name "$container" -e POSTGRES_HOST_AUTH_METHOD=trust -d postgres:17-alpine >/dev/null
+docker run --rm --name "$container" --tmpfs /var/lib/postgresql/data:rw,size=256m -e POSTGRES_HOST_AUTH_METHOD=trust -d postgres:17-alpine >/dev/null
 for attempt in {1..40}; do
   # The image starts a temporary Unix-socket server during initdb. Wait for the
   # final TCP listener so tests cannot race that temporary server's shutdown.
@@ -19,6 +19,8 @@ docker exec -i "$container" psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 < t
 docker exec -i "$container" psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 < tests/account-access.sql
 
 docker exec -i "$container" psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 < tests/business-access.sql
+
+docker exec -i "$container" psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 < tests/completion-access.sql
 
 # A full business-record round trip in a second, fresh database. Source data is
 # synthetic; no production credentials, users or attachments enter this test.

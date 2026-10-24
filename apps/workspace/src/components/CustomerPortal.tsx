@@ -10,6 +10,12 @@ type Share = {
   total_minor: number;
 };
 type State = {
+  acceptance_requests?: {
+    id: string;
+    prompt: string;
+    status: string;
+    document: string;
+  }[];
   email: string;
   customers: { id: string; name: string }[];
   documents: Share[];
@@ -197,6 +203,61 @@ export default function CustomerPortal() {
               <p>No documents have been shared yet.</p>
             )}
           </section>
+          {!!state.acceptance_requests?.length && (
+            <section className="panel">
+              <h2>Requested acceptance evidence</h2>
+              <p>
+                Upload only the evidence Lutera requested. PDF, JPEG, PNG or
+                WebP, up to 1 MB.
+              </p>
+              {state.acceptance_requests.map((r) => (
+                <article className="operation-record" key={r.id}>
+                  <h3>{r.document}</h3>
+                  <p>{r.prompt}</p>
+                  {r.status === "completed" ? (
+                    <p>Evidence received.</p>
+                  ) : (
+                    <label className="field">
+                      <span>Upload evidence for {r.document}</span>
+                      <input
+                        type="file"
+                        accept="application/pdf,image/jpeg,image/png,image/webp"
+                        disabled={busy}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          void run(async () => {
+                            if (file.size > 1048576)
+                              throw new Error(
+                                "Choose a document or image under 1 MB.",
+                              );
+                            const bytes = new Uint8Array(
+                              await file.arrayBuffer(),
+                            );
+                            let binary = "";
+                            for (let i = 0; i < bytes.length; i += 8192)
+                              binary += String.fromCharCode(
+                                ...bytes.subarray(i, i + 8192),
+                              );
+                            await api("portal/evidence", {
+                              request_id: r.id,
+                              name: file.name.slice(0, 160),
+                              data: btoa(binary),
+                            });
+                            await refresh();
+                            setMessage(
+                              "Acceptance evidence uploaded successfully.",
+                            );
+                          });
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
+                </article>
+              ))}
+            </section>
+          )}
           {rec && selected && (
             <section className="panel">
               <h2>{String(rec.number)}</h2>

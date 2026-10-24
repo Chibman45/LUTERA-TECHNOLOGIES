@@ -1,4 +1,5 @@
 import "server-only";
+import { statementPDF, type StatementSnapshot } from "./statement";
 import { createClient } from "@supabase/supabase-js";
 import { financialExport } from "./exports";
 import type { BusinessDocument, Settings } from "./contracts";
@@ -45,6 +46,7 @@ type MailJob = {
   body: string;
   document?: Record<string, unknown>;
   legacy?: BusinessDocument;
+  statement_snapshot?: StatementSnapshot;
   lines?: { description: string; quantity: number; unit_minor: number }[];
 };
 export async function dispatchBusinessMail() {
@@ -61,6 +63,13 @@ export async function dispatchBusinessMail() {
           error = "";
         try {
           const attachments: { filename: string; content: string }[] = [];
+          if (m.statement_snapshot) {
+            const bytes = await statementPDF(m.statement_snapshot);
+            attachments.push({
+              filename: "Lutera-customer-statement.pdf",
+              content: bytes.toString("base64"),
+            });
+          }
           if (m.document) {
             const r = m.document;
             const snap = r.snapshot as {

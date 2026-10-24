@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   can,
   roles,
@@ -9,13 +10,32 @@ import {
   type Staff,
   type SiteContent,
 } from "@/lib/contracts";
-import Documents from "./documents";
-import StaffCards from "./staff";
-import ContentEditor from "./content";
-import Account from "./Account";
-import BusinessActivity from "./BusinessActivity";
-import BusinessReports from "./BusinessReports";
-import BusinessAdministration from "./BusinessAdministration";
+const Documents = dynamic(() => import("./documents"), {
+  loading: () => <p role="status">Loading section…</p>,
+});
+import WorkspaceShell from "./WorkspaceShell";
+const OperationsDesk = dynamic(() => import("./OperationsDesk"), {
+  loading: () => <p role="status">Loading section…</p>,
+});
+const StaffCards = dynamic(() => import("./staff"), {
+  loading: () => <p role="status">Loading section…</p>,
+});
+const ContentEditor = dynamic(() => import("./content"), {
+  loading: () => <p role="status">Loading section…</p>,
+});
+const Account = dynamic(() => import("./Account"), {
+  loading: () => <p role="status">Loading section…</p>,
+});
+const BusinessActivity = dynamic(() => import("./BusinessActivity"), {
+  loading: () => <p role="status">Loading section…</p>,
+});
+const BusinessReports = dynamic(() => import("./BusinessReports"), {
+  loading: () => <p role="status">Loading section…</p>,
+});
+const BusinessAdministration = dynamic(
+  () => import("./BusinessAdministration"),
+  { loading: () => <p role="status">Loading section…</p> },
+);
 import BusinessWorkspace, { BusinessDashboard } from "./BusinessWorkspace";
 import PasswordInput from "./PasswordInput";
 import { api, saveFile } from "@/lib/client";
@@ -95,6 +115,7 @@ export default function Workspace() {
             ? "account"
             : [
                   "operations",
+                  "controls",
                   "reports",
                   "content",
                   "finance",
@@ -164,6 +185,7 @@ export default function Workspace() {
     ["overview", "Overview"],
     ["account", "My account"],
     ["operations", "Business operations"],
+    ["controls", "Operational controls"],
     ["reports", "Management reports"],
     ["content", "Website"],
     ["finance", "Documents"],
@@ -178,6 +200,7 @@ export default function Workspace() {
       area === "overview" ||
       area === "account" ||
       area === "operations" ||
+      area === "controls" ||
       (area === "reports" && !!session && can(session.role, "finance")) ||
       (session &&
         can(session.role, area === "business-settings" ? "members" : area)),
@@ -194,177 +217,142 @@ export default function Workspace() {
       <MFA session={session} onSuccess={checkSession} onSignout={signout} />
     );
   return (
-    <div className="workspace">
-      <header className="topbar">
-        <img
-          src="/brand/lutera-horizontal-light.svg"
-          alt="Lutera"
-          width="140"
-          height="40"
-        />
-        <span className="private-label">Business workspace</span>
-        <div className="account">
-          <span>
-            {session.email}
-            <small>{session.role}</small>
-          </span>
-          <button className="secondary" onClick={signout} disabled={busy}>
-            Sign out
+    <WorkspaceShell
+      tabs={tabs}
+      active={tab}
+      onSelect={(area) => {
+        setTab(area);
+        setError("");
+      }}
+      email={session.email}
+      role={session.role}
+      busy={busy}
+      onSignout={signout}
+    >
+      <main id="workspace-main" tabIndex={-1}>
+        <div className="page-heading">
+          <div>
+            <p className="eyebrow">Lutera Technology Ltd</p>
+            <h1>{tabs.find(([area]) => area === tab)?.[1]}</h1>
+          </div>
+          <button
+            className="secondary"
+            onClick={() => {
+              if (mayLeave()) refresh().catch((e) => setError(e.message));
+            }}
+          >
+            Refresh
           </button>
         </div>
-      </header>
-      <div className="workspace-grid">
-        <aside>
-          <nav aria-label="Workspace sections">
-            {tabs.map(([area, label]) => (
-              <button
-                key={area}
-                aria-current={tab === area ? "page" : undefined}
-                onClick={() => {
-                  if (area !== tab && mayLeave()) {
-                    setTab(area);
-                    setError("");
-                  }
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-          <a href="https://luteratech.com" target="_blank" rel="noreferrer">
-            View public website ↗
-          </a>
-          <p>
-            Private records.
-            <br />
-            Approved access only.
+        {error && (
+          <p className="error" role="alert">
+            {error}
           </p>
-        </aside>
-        <main id="workspace-main">
-          <div className="page-heading">
-            <div>
-              <p className="eyebrow">Lutera Technology Ltd</p>
-              <h1>{tabs.find(([area]) => area === tab)?.[1]}</h1>
-            </div>
-            <button
-              className="secondary"
-              onClick={() => {
-                if (mayLeave()) refresh().catch((e) => setError(e.message));
-              }}
-            >
-              Refresh
-            </button>
-          </div>
-          {error && (
-            <p className="error" role="alert">
-              {error}
-            </p>
-          )}
-          {!data ? (
-            <Notice>Loading your records…</Notice>
-          ) : (
-            <>
-              {tab === "operations" && (
-                <BusinessWorkspace
-                  onOpenDocument={(id) => {
-                    setDocumentId(id);
-                    setTab("finance");
-                  }}
-                />
-              )}
-              {tab === "overview" && (
-                <>
-                  <BusinessDashboard onOpen={() => setTab("operations")} />
-                  <div className="stat-grid">
-                    {[
-                      ["Recent documents", data.documents.length],
-                      [
-                        "Drafts to review",
-                        data.documents.filter((d) => d.status === "draft")
-                          .length,
-                      ],
-                      ["Recent staff profiles", data.staff.length],
-                    ].map(([label, value]) => (
-                      <article className="stat" key={label}>
-                        <span>{label}</span>
-                        <strong>{value}</strong>
-                      </article>
-                    ))}
+        )}
+        {!data ? (
+          <Notice>Loading your records…</Notice>
+        ) : (
+          <>
+            {tab === "operations" && (
+              <BusinessWorkspace
+                onOpenDocument={(id) => {
+                  setDocumentId(id);
+                  setTab("finance");
+                }}
+              />
+            )}
+            {tab === "overview" && (
+              <>
+                <BusinessDashboard onOpen={() => setTab("operations")} />
+                <div className="stat-grid">
+                  {[
+                    ["Recent documents", data.documents.length],
+                    [
+                      "Drafts to review",
+                      data.documents.filter((d) => d.status === "draft").length,
+                    ],
+                    ["Recent staff profiles", data.staff.length],
+                  ].map(([label, value]) => (
+                    <article className="stat" key={label}>
+                      <span>{label}</span>
+                      <strong>{value}</strong>
+                    </article>
+                  ))}
+                </div>
+                <section className="panel welcome">
+                  <p className="eyebrow">Supply. Build. Connect.</p>
+                  <h2>Make the next step a considered one.</h2>
+                  <p>
+                    Prepare a quotation, update your website draft, or create a
+                    staff card. Issued financial documents are locked and every
+                    change leaves an activity record.
+                  </p>
+                  <div className="actions">
+                    {can(session.role, "finance") && (
+                      <button onClick={() => setTab("finance")}>
+                        Prepare a document ↗
+                      </button>
+                    )}
+                    {can(session.role, "content") && (
+                      <button
+                        className="secondary"
+                        onClick={() => setTab("content")}
+                      >
+                        Edit website
+                      </button>
+                    )}
                   </div>
-                  <section className="panel welcome">
-                    <p className="eyebrow">Supply. Build. Connect.</p>
-                    <h2>Make the next step a considered one.</h2>
-                    <p>
-                      Prepare a quotation, update your website draft, or create
-                      a staff card. Issued financial documents are locked and
-                      every change leaves an activity record.
-                    </p>
-                    <div className="actions">
-                      {can(session.role, "finance") && (
-                        <button onClick={() => setTab("finance")}>
-                          Prepare a document ↗
-                        </button>
-                      )}
-                      {can(session.role, "content") && (
-                        <button
-                          className="secondary"
-                          onClick={() => setTab("content")}
-                        >
-                          Edit website
-                        </button>
-                      )}
-                    </div>
-                  </section>
-                  <Notice>
-                    Sessions expire after 12 hours. Signing out revokes this
-                    account’s sessions on every device. Keep your authenticator
-                    recovery arrangements with the company owner.
-                  </Notice>
-                </>
-              )}
-              {tab === "finance" && (
-                <Documents
-                  initialId={documentId}
-                  records={data.documents}
-                  settings={data.settings!.payload}
-                  refresh={refresh}
-                />
-              )}
-              {tab === "staff" && (
-                <StaffCards
-                  records={data.staff}
-                  settings={data.settings!.payload}
-                  refresh={refresh}
-                />
-              )}
-              {tab === "content" && (
-                <ContentEditor
-                  initial={data.content!}
-                  publications={data.publications}
-                  connected={data.publishing_connected}
-                  refresh={refresh}
-                />
-              )}
-              {tab === "settings" && (
-                <SettingsEditor
-                  owner={session.role === "owner"}
-                  initial={data.settings!}
-                  refresh={refresh}
-                />
-              )}
-              {tab === "members" && (
-                <Members records={data.members} refresh={refresh} />
-              )}
-              {tab === "audit" && <BusinessActivity />}
-              {tab === "business-settings" && <BusinessAdministration />}
-              {tab === "reports" && <BusinessReports />}
-              {tab === "backup" && <Backups />}
-              {tab === "account" && <Account session={session} />}
-            </>
-          )}
-        </main>
-      </div>
-    </div>
+                </section>
+                <Notice>
+                  Sessions expire after 12 hours. Signing out revokes this
+                  account’s sessions on every device. Keep your authenticator
+                  recovery arrangements with the company owner.
+                </Notice>
+              </>
+            )}
+            {tab === "finance" && (
+              <Documents
+                initialId={documentId}
+                records={data.documents}
+                settings={data.settings!.payload}
+                refresh={refresh}
+              />
+            )}
+            {tab === "staff" && (
+              <StaffCards
+                records={data.staff}
+                settings={data.settings!.payload}
+                refresh={refresh}
+              />
+            )}
+            {tab === "content" && (
+              <ContentEditor
+                initial={data.content!}
+                publications={data.publications}
+                connected={data.publishing_connected}
+                refresh={refresh}
+              />
+            )}
+            {tab === "settings" && (
+              <SettingsEditor
+                owner={session.role === "owner"}
+                initial={data.settings!}
+                refresh={refresh}
+              />
+            )}
+            {tab === "members" && (
+              <Members records={data.members} refresh={refresh} />
+            )}
+            {tab === "controls" && <OperationsDesk />}
+            {tab === "audit" && <BusinessActivity />}
+            {tab === "business-settings" && <BusinessAdministration />}
+            {tab === "reports" && <BusinessReports />}
+            {tab === "backup" && <Backups />}
+            {tab === "account" && <Account session={session} />}
+          </>
+        )}
+      </main>
+    </WorkspaceShell>
   );
 }
 function Login({ onSuccess }: { onSuccess: () => Promise<void> }) {

@@ -1,4 +1,6 @@
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID, createHash } from "node:crypto";
+import { normalizeEvidence } from "@/lib/evidence";
+import { portalStorage } from "@/lib/customer-portal";
 import { cookies } from "next/headers";
 import { after } from "next/server";
 import { z } from "zod";
@@ -166,6 +168,44 @@ export async function POST(
         maxAge: 0,
       });
       return ok({ success: true });
+    }
+    if (action === "evidence") {
+      const b = z
+        .object({
+          request_id: z.uuid(),
+          name: z.string().trim().min(1).max(160),
+          data: z.string().max(1400000),
+        })
+        .strict()
+        .parse(raw);
+      await enforceAuthLimit(jobDatabase(), request, "portal/evidence", hash);
+      const prepared = await normalizeEvidence(Buffer.from(b.data, "base64")),
+        id = randomUUID();
+      const record = await portal({
+        action: "reserve_evidence",
+        request_id: b.request_id,
+        session_hash: hash,
+        id,
+        name: b.name,
+        content_type: prepared.type,
+        size: prepared.bytes.length,
+        sha256: createHash("sha256").update(prepared.bytes).digest("hex"),
+      });
+      const result = await portalStorage()
+        .storage.from("work-portal-evidence")
+        .upload(record.path, prepared.bytes, {
+          contentType: prepared.type,
+          upsert: false,
+        });
+      if (result.error) throw new Error("Upload failed");
+      return ok(
+        await portal({
+          action: "complete_evidence",
+          request_id: b.request_id,
+          id,
+          session_hash: hash,
+        }),
+      );
     }
     if (action === "ticket") {
       const b = z

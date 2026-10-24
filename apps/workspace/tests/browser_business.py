@@ -1,3 +1,4 @@
+import os
 """Business UI fixtures + real API denial checks. No live business writes/mail."""
 import base64,json,re,shutil,uuid
 from pathlib import Path
@@ -5,10 +6,10 @@ from urllib.parse import urlparse,parse_qs
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parents[1]
 v=dict(l.split('=',1) for l in (root/'.env.local').read_text().splitlines() if l and not l.startswith('#'))
-origin=v['WORKSPACE_ORIGIN'];entry=v['WORKSPACE_ENTRY'];out=root/'test-results';out.mkdir(exist_ok=True)
+origin=os.environ.get('LUTERA_TEST_URL',v['WORKSPACE_ORIGIN']);entry=v['WORKSPACE_ENTRY'];out=root/'test-results';out.mkdir(exist_ok=True)
 uid='daae4165-3435-47ea-b5f1-f5df516e9c6b';cid='8fe434ad-6b01-4960-abba-b2cdf7edb8f9'
 customer={'id':cid,'name':'UI business fixture','email':'ui@example.invalid','phone':'','address':'','delivery_address':'','sector':'','tax_id':'','assigned_to':uid,'archived':False,'version':1}
-rows={'customers':[customer],'payments':[]};calls=[];errors=[]
+rows={'customers':[customer],'payments':[]};ops_rows={};calls=[];errors=[]
 settings={'company':{'name':'Lutera Technology Ltd','address':'Abuja, Nigeria','email':'chimaster010@gmail.com','phone':'+2349026276130','website':'https://luteratech.com'},'currency':'NGN','bank_name':'','account_name':'','account_number':'','tax_id':'','document_notes':''}
 state={'documents':[],'staff':[],'audit':[],'members':[],'content':None,'settings':{'payload':settings,'version':1},'publications':[],'publishing_connected':False}
 conf={'owner':True,'me':uid,'people':[{'id':uid,'name':'Fixture Owner'}],'access':{a:{'read':True,'write':True,'approve':True} for a in ['sales','finance','inventory','procurement','projects','support','reports']}}
@@ -27,6 +28,16 @@ def fixture(route):
  if action=='business/file':assert body['data'];return reply({'id':'c2fddfaa-ed8d-41df-a918-e0c698afdb1d'})
  if action=='business/payment':
   assert body['data']['confirmed'] is True and body['data']['evidence_id'];rows['payments']=[{'id':str(uuid.uuid4()),**body['data'],'status':'confirmed','version':1}];return reply(rows['payments'][0])
+ if action=='operations/list':
+  entity=parse_qs(urlparse(route.request.url).query).get('entity',[''])[0]
+  return reply({'rows':[{'id':1,'version':1,'notes':''}] if entity=='operating_policy' else ops_rows.get(entity,[]),'more':False})
+ if action=='operations/command':
+  assert body['request_key']
+  if body['action']=='location':
+   r={'id':str(uuid.uuid4()),'version':1,**body['data']};ops_rows.setdefault('locations',[]).append(r);return reply(r)
+  return reply({'success':True})
+ if action=='operations/reports':return reply({key:[] for key in ['receivables','payables','spending','cost_centers','projects','commitments','orders']})
+ if action=='business/delivery-calendar':return reply({'id':1,'version':1,'days':[1,2,3,4,5],'start_minute':540,'end_minute':1020,'holidays':[]})
  if action=='business/reports':return reply({'receivables':[],'payables':[],'spending':[],'orders':[]})
  if action=='business/health':return reply({'automation':{'id':1,'version':1,'interval_days':7,'invoice_reminders':False,'maintenance_reminders':False},'health':{'business_email':True,'latest_backup':'Not run yet'}})
  if action=='portal/session':return reply({'email':'ui@example.invalid','customers':[{'id':cid,'name':'UI business fixture'}],'documents':[],'work':[]})
@@ -35,7 +46,7 @@ def fixture(route):
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path=shutil.which('chromium') or None,headless=True,args=['--no-sandbox'])
  c=b.new_context(viewport={'width':1280,'height':1000});page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
- for path in ['/api/business/config','/api/business/health','/api/business/file?id='+cid,'/api/portal/session','/api/backups/drive','/api/jobs']:
+ for path in ['/api/operations/list?entity=locations','/api/business/config','/api/business/health','/api/business/file?id='+cid,'/api/portal/session','/api/backups/drive','/api/jobs']:
   assert c.request.get(origin+path).status==401,path
  assert c.request.post(origin+'/api/business/payment',data={},headers={'Origin':'https://evil.example'}).status==403
  assert c.request.post(origin+'/api/portal/ticket',data={},headers={'Origin':'https://evil.example'}).status==400
@@ -71,6 +82,41 @@ with sync_playwright() as p:
  page.get_by_role('button',name='Confirm payment and issue receipt',exact=True).click()
  page.get_by_text('Payment recorded with evidence',exact=False).wait_for()
  assert rows['payments'][0]['amount_minor']==120050
+ # Desktop/tablet sidebar can collapse, returns width to content and remembers the preference.
+ for width in [768,1024,1280]:
+  page.set_viewport_size({'width':width,'height':900})
+  sidebar=page.locator('#workspace-navigation');assert sidebar.is_visible()
+  before=page.locator('#workspace-main').bounding_box()['width']
+  page.get_by_role('button',name='Close workspace menu',exact=True).click();assert not sidebar.is_visible()
+  assert page.locator('#workspace-main').bounding_box()['width']>before
+  page.get_by_role('button',name='Open workspace menu',exact=True).click();assert sidebar.is_visible()
+ # Mobile navigation is a keyboard-accessible dropdown, not a horizontal strip.
+ page.set_viewport_size({'width':390,'height':844});assert not page.locator('#workspace-navigation').is_visible()
+ page.get_by_role('button',name='Open workspace menu',exact=True).click()
+ assert page.get_by_role('searchbox',name='Find a section').evaluate('(el)=>el===document.activeElement')
+ page.get_by_role('searchbox',name='Find a section').fill('Operational controls')
+ page.get_by_role('button',name='Operational controls',exact=True).click()
+ assert not page.locator('#workspace-navigation').is_visible()
+ page.get_by_role('heading',name='Operational controls',exact=True).wait_for()
+ try: page.get_by_label('Operational area',exact=True).select_option('locations',timeout=10000)
+ except Exception:
+  print('Fixture calls:',calls);print('Page errors:',errors);print(page.locator('main').inner_text());raise
+ page.get_by_role('button',name='New record +',exact=True).click()
+ page.get_by_label(re.compile(r'^Location name')).fill('UI fixture warehouse')
+ page.get_by_role('button',name='Confirm and save',exact=True).click()
+ page.get_by_text('Recorded successfully.',exact=False).wait_for()
+ assert len(ops_rows['locations'])==1
+ page.get_by_role('button',name='Open workspace menu',exact=True).click()
+ page.keyboard.press('Escape');assert not page.locator('#workspace-navigation').is_visible()
+ assert page.get_by_role('button',name='Open workspace menu',exact=True).evaluate('(el)=>el===document.activeElement')
+ for width in [320,390,600,768,1024,1280]:
+  page.set_viewport_size({'width':width,'height':900})
+  assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+  page.add_script_tag(content=axe)
+  check=page.evaluate("async()=>await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}})")
+  assert not check['violations'],[(x['id'],x['help']) for x in check['violations']]
+  page.screenshot(path=str(out/f'workspace-controls-{width}.png'),full_page=True)
+ page.set_viewport_size({'width':1280,'height':1000})
  page.get_by_role('button',name='Management reports',exact=True).click()
  page.get_by_role('heading',name='Order contribution estimates',exact=True).wait_for()
  page.get_by_role('button',name='Operations settings',exact=True).click()
@@ -78,4 +124,4 @@ with sync_playwright() as p:
  page.goto(origin+'/portal');page.get_by_role('heading',name='UI business fixture',exact=True).wait_for()
  assert not errors,errors
  b.close()
-print('PASS: business API denial, CRM form, evidence-required manual payment, reports/settings/portal fixtures, phone/tablet/desktop layouts and axe. No real transactions or emails.')
+print('PASS: business API denial, CRM form, evidence-required manual payment, reports/settings/portal fixtures, phone/tablet/desktop layouts, collapsible sidebar/mobile dropdown, operational controls and axe. No real transactions or emails.')

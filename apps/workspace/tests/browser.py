@@ -1,3 +1,4 @@
+import os
 """UI flow fixtures + real unauthenticated HTTP denials. Never send emails."""
 import base64
 import copy
@@ -8,7 +9,7 @@ import shutil
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parents[1]
 values=dict(line.split('=',1) for line in (root/'.env.local').read_text().splitlines() if line and not line.startswith('#'))
-origin=values['WORKSPACE_ORIGIN']
+origin=os.environ.get('LUTERA_TEST_URL',values['WORKSPACE_ORIGIN'])
 entry=values['WORKSPACE_ENTRY']
 site=json.loads((root/'../../content/site.json').resolve().read_text())
 settings={'company':{'name':'Lutera Technology Ltd','address':'No. 7, Mahatma Gandhi Street, Area 11, Garki, Abuja, FCT, Nigeria','email':'chimaster010@gmail.com','phone':'+234 902 6276 130','website':'https://luteratech.com'},'bank_name':'','account_name':'','account_number':'','tax_id':'','document_notes':'','currency':'NGN'}

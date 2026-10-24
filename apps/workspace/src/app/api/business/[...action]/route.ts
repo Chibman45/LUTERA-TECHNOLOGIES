@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { dispatchBusinessMail, job } from "@/lib/business-mail";
 import { randomUUID, createHash } from "node:crypto";
 import { z } from "zod";
+import { statementPDF, type StatementSnapshot } from "@/lib/statement";
 import { normalizeEvidence } from "@/lib/evidence";
 import {
   businessIdentity,
@@ -134,6 +135,7 @@ export async function GET(
         automation,
         health: {
           public_site_publishing: !!process.env.PUBLIC_SITE_DEPLOY_HOOK,
+          attachment_malware_scanner: !!process.env.CLAMAV_HOST,
           business_email: !!process.env.BUSINESS_MAIL_KEY,
           signed_delivery_events: !!process.env.BUSINESS_MAIL_WEBHOOK_SECRET,
           background_jobs: !!process.env.BUSINESS_JOB_SECRET,
@@ -202,7 +204,11 @@ export async function GET(
       const u = new URL(request.url);
       return ok(
         checked(
-          await db.rpc("work_business_dashboard", {
+          await db.rpc("work_business_dashboard_filtered", {
+            owner_id: u.searchParams.get("owner")
+              ? z.uuid().parse(u.searchParams.get("owner"))
+              : null,
+            service: u.searchParams.get("service")?.slice(0, 100) || "",
             start_date: u.searchParams.get("from") || null,
             end_date: u.searchParams.get("to") || null,
           }),
@@ -232,6 +238,9 @@ export async function GET(
       );
       const blob = checked(
         await db.storage.from("work-evidence").download(file.path),
+      );
+      checked(
+        await db.rpc("work_log_file_read", { kind: "staff-evidence", fid: id }),
       );
       return new Response(await blob.arrayBuffer(), {
         headers: {
@@ -637,6 +646,7 @@ export async function POST(
     if (action === "statement") {
       const b = z
         .object({
+          format: z.enum(["pdf", "csv"]).default("csv"),
           customer_id: z.uuid(),
           from: z.union([z.literal(""), z.iso.date()]),
           to: z.union([z.literal(""), z.iso.date()]),
@@ -652,6 +662,27 @@ export async function POST(
           ccy: b.currency,
         }),
       );
+      if (b.from && b.to && b.from > b.to)
+        throw new BusinessError("Choose a valid statement date range.");
+      if (b.format === "pdf") {
+        const company = checked(
+          await db.from("work_settings").select("payload").eq("id", 1).single(),
+        ).payload;
+        const bytes = await statementPDF({
+          ...statement,
+          company,
+          from: b.from,
+          to: b.to,
+        } as StatementSnapshot);
+        return new Response(new Uint8Array(bytes), {
+          headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition":
+              'attachment; filename="Lutera-customer-statement.pdf"',
+            "Cache-Control": "private, no-store",
+          },
+        });
+      }
       const data = statement as {
         opening_minor: number;
         events: Record<string, unknown>[];
@@ -707,6 +738,11 @@ export async function POST(
           version: z.number().int().min(1),
           invoice_reminders: z.boolean(),
           maintenance_reminders: z.boolean(),
+          enquiry_reminders: z.boolean().optional(),
+          warranty_reminders: z.boolean().optional(),
+          visit_reminders: z.boolean().optional(),
+          delivery_notices: z.boolean().optional(),
+
           interval_days: z.number().int().min(1).max(90),
           updated_at: z.string().optional(),
         })
@@ -884,6 +920,39 @@ export async function POST(
         if (field)
           q = q.ilike(field, `%${body.query.replace(/[\\%_]/g, "\\$&")}%`);
       }
+      if (
+        body.owner &&
+        [
+          "customers",
+          "enquiries",
+          "opportunities",
+          "commercial",
+          "cases",
+          "tasks",
+        ].includes(body.entity)
+      )
+        q = q.eq("assigned_to", body.owner);
+      if (body.service && body.entity === "enquiries")
+        q = q.contains("services", [body.service]);
+      if (body.service && body.entity === "cases")
+        q = q.eq(
+          "category",
+          (
+            {
+              ai: "ai-automation",
+              support: "installation-labs",
+              cloud: "cloud-integration",
+            } as Record<string, string>
+          )[body.service] || body.service,
+        );
+      if (body.from) q = q.gte("created_at", body.from + "T00:00:00+01:00");
+      if (body.to)
+        q = q.lt(
+          "created_at",
+          new Date(
+            new Date(body.to + "T00:00:00+01:00").getTime() + 86400000,
+          ).toISOString(),
+        );
       if (body.parent && parentFields[body.entity])
         q = q.eq(parentFields[body.entity]!, body.parent);
       if (body.kind && ["commercial", "cases", "items"].includes(body.entity))
@@ -912,7 +981,10 @@ export async function POST(
           );
         const columns = rows.length
           ? Object.keys(rows[0]).filter(
-              (k) => !["snapshot", "sha256", "path"].includes(k),
+              (k) =>
+                !["snapshot", "statement_snapshot", "sha256", "path"].includes(
+                  k,
+                ),
             )
           : ["id"];
         return new Response(csv(rows, columns), {

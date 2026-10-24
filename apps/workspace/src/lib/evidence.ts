@@ -1,8 +1,10 @@
 import sharp from "sharp";
+import { scanEvidence } from "./evidence-scan";
 import { PDFDocument, PDFName } from "pdf-lib";
 export async function normalizeEvidence(bytes: Buffer) {
   if (!bytes.length || bytes.length > 1048576)
     throw new Error("Choose a document or image under 1 MB.");
+  await scanEvidence(bytes);
   if (bytes.subarray(0, 5).toString() === "%PDF-") {
     const input = await PDFDocument.load(bytes, {
       ignoreEncryption: false,

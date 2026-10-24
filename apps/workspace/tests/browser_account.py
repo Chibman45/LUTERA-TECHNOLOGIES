@@ -1,10 +1,11 @@
+import os
 """Private-account UI fixtures with real unauthenticated API guards. No real emails or records."""
 import base64,json,shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parents[1]
 v=dict(l.split('=',1) for l in (root/'.env.local').read_text().splitlines() if l and not l.startswith('#'))
-origin=v['WORKSPACE_ORIGIN'];entry=v['WORKSPACE_ENTRY'];out=root/'test-results';out.mkdir(exist_ok=True)
+origin=os.environ.get('LUTERA_TEST_URL',v['WORKSPACE_ORIGIN']);entry=v['WORKSPACE_ENTRY'];out=root/'test-results';out.mkdir(exist_ok=True)
 png=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aVxkAAAAASUVORK5CYII=')
 session={'email':'owner-fixture@example.invalid','role':'owner','verified':True,'factors':[{'id':'82e20845-050f-47ba-a61e-b7eb7f1d0489','name':'Work phone'}]}
 info={'email':session['email'],'role':'owner','pending_email':None,'profile':{'full_name':'Fixture Owner','phone':'','avatar_url':None,'version':0},'factors':session['factors'].copy()}

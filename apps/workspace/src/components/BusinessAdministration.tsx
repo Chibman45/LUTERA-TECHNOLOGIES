@@ -1,12 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import BusinessCalendar from "./BusinessCalendar";
+import BusinessPolicy from "./BusinessPolicy";
 import { api, saveFile } from "@/lib/client";
 type Automation = {
   id: number;
   version: number;
   invoice_reminders: boolean;
   maintenance_reminders: boolean;
+  enquiry_reminders: boolean;
+  warranty_reminders: boolean;
+  visit_reminders: boolean;
+  delivery_notices: boolean;
+
   interval_days: number;
 };
 export default function BusinessAdministration() {
@@ -101,6 +107,28 @@ export default function BusinessAdministration() {
             />
             Notify Lutera about maintenance renewals
           </label>
+          {(
+            [
+              ["enquiry_reminders", "Internal enquiry follow-up reminders"],
+              ["warranty_reminders", "Internal warranty review reminders"],
+              [
+                "visit_reminders",
+                "Internal scheduled maintenance visit reminders",
+              ],
+              ["delivery_notices", "Email customers when dispatch is recorded"],
+            ] as const
+          ).map(([key, label]) => (
+            <label className="check" key={key}>
+              <input
+                type="checkbox"
+                checked={!!settings[key]}
+                onChange={(e) =>
+                  setSettings({ ...settings, [key]: e.target.checked })
+                }
+              />
+              {label}
+            </label>
+          ))}
           <label className="field">
             <span>Minimum reminder period in days</span>
             <input
@@ -121,6 +149,7 @@ export default function BusinessAdministration() {
         </form>
       )}
       <BusinessCalendar />
+      <BusinessPolicy />
       <details className="ops-gap">
         <summary>Backup and accounting arrangements</summary>
         <p>

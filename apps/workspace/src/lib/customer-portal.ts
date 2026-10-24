@@ -1,4 +1,5 @@
 import "server-only";
+import { createClient } from "@supabase/supabase-js";
 import {
   createHash,
   randomBytes,
@@ -75,4 +76,16 @@ export async function dispatchPortalMail() {
       sent,
     });
   }
+}
+
+export function portalStorage() {
+  const url = process.env.SUPABASE_URL,
+    key = process.env.SUPABASE_PUBLISHABLE_KEY,
+    proof = process.env.BUSINESS_JOB_SECRET;
+  if (!url || !key || !proof)
+    throw new Error("Customer uploads are not configured.");
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { "x-lutera-backup-proof": proof } },
+  });
 }

@@ -30,6 +30,7 @@ import CustomerImport from "./CustomerImport";
 import BusinessReceiptViewer from "./BusinessReceiptViewer";
 import BusinessDelivery from "./BusinessDelivery";
 import BusinessQuoteEditor from "./BusinessQuoteEditor";
+import CustomerStatement from "./CustomerStatement";
 export type BusinessConfig = {
   owner?: boolean;
   legacy_documents?: boolean;
@@ -168,11 +169,26 @@ export function BusinessDashboard({ onOpen }: { onOpen?: () => void }) {
   const [data, setData] = useState<Record<string, unknown> | null>(null),
     [error, setError] = useState(""),
     [from, setFrom] = useState(""),
-    [to, setTo] = useState("");
+    [to, setTo] = useState(""),
+    [owner, setOwner] = useState(""),
+    [service, setService] = useState(""),
+    [people, setPeople] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    api<BusinessConfig>("business/config")
+      .then((c) => setPeople(c.people))
+      .catch(() => {});
+  }, []);
   useEffect(() => {
     let active = true;
     api<Record<string, unknown>>(
-      "business/dashboard?from=" + from + "&to=" + to,
+      "business/dashboard?from=" +
+        from +
+        "&to=" +
+        to +
+        "&owner=" +
+        owner +
+        "&service=" +
+        service,
     )
       .then((d) => {
         if (active) {
@@ -186,7 +202,7 @@ export function BusinessDashboard({ onOpen }: { onOpen?: () => void }) {
     return () => {
       active = false;
     };
-  }, [from, to]);
+  }, [from, to, owner, service]);
   return (
     <section className="panel">
       <div className="toolbar">
@@ -199,6 +215,35 @@ export function BusinessDashboard({ onOpen }: { onOpen?: () => void }) {
         )}
       </div>
       <div className="form-grid">
+        <label className="field">
+          <span>Work assigned to</span>
+          <select value={owner} onChange={(e) => setOwner(e.target.value)}>
+            <option value="">All permitted colleagues</option>
+            {people.map((p) => (
+              <option value={p.id} key={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          <span>Enquiry / work service</span>
+          <select value={service} onChange={(e) => setService(e.target.value)}>
+            <option value="">All services</option>
+            {[
+              "procurement",
+              "hardware",
+              "consulting",
+              "installation-labs",
+              "ai-automation",
+              "software",
+              "data",
+              "cloud-integration",
+            ].map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+        </label>
         <label className="field">
           <span>Period from</span>
           <input
@@ -271,9 +316,10 @@ export function BusinessDashboard({ onOpen }: { onOpen?: () => void }) {
             </table>
           </div>
           <p className="muted">
-            Period filters apply to invoices, cash records, refunds and
-            expenses. Outstanding balances and work queues are current. Amounts
-            reflect your access. Invoiced sales are separate from cash received.
+            Colleague/service filters apply to work queues. Period filters apply
+            to invoices, cash records, refunds and expenses. Outstanding
+            balances and work queues are current. Amounts reflect your access.
+            Invoiced sales are separate from cash received.
           </p>
         </>
       ) : (
@@ -372,6 +418,10 @@ export default function BusinessWorkspace({
     [rows, setRows] = useState<Row[]>([]),
     [selected, setSelected] = useState<Row | null | undefined>(undefined),
     [query, setQuery] = useState(""),
+    [filterOwner, setFilterOwner] = useState(""),
+    [filterService, setFilterService] = useState(""),
+    [filterFrom, setFilterFrom] = useState(""),
+    [filterTo, setFilterTo] = useState(""),
     [page, setPage] = useState(0),
     [more, setMore] = useState(false),
     [busy, setBusy] = useState(false),
@@ -398,6 +448,10 @@ export default function BusinessWorkspace({
         page,
         parent: "",
         status: "",
+        owner: filterOwner,
+        service: filterService,
+        from: filterFrom,
+        to: filterTo,
       });
       setRows(r.rows);
       setMore(r.more);
@@ -407,7 +461,7 @@ export default function BusinessWorkspace({
     } finally {
       setBusy(false);
     }
-  }, [resource, query, page]);
+  }, [resource, query, page, filterOwner, filterService, filterFrom, filterTo]);
   useEffect(() => {
     let active = true;
     api<BusinessConfig>("business/config")
@@ -786,27 +840,31 @@ export default function BusinessWorkspace({
               )}
             </>
           )}
-          {resource.entity === "bank_lines" && !selected.payment_id && (
-            <button
-              onClick={() =>
-                act(
-                  "Match bank line to recorded payment",
-                  [
-                    ref(
-                      "payment_id",
-                      "Confirmed customer payment",
-                      "payments",
-                      true,
-                    ),
-                  ],
-                  "bank-match",
-                  { id: selected.id },
-                )
-              }
-            >
-              Match recorded payment
-            </button>
-          )}
+          {resource.entity === "bank_lines" &&
+            !selected.payment_id &&
+            !selected.supplier_payment_id &&
+            !selected.refund_id &&
+            Number(selected.amount_minor) > 0 && (
+              <button
+                onClick={() =>
+                  act(
+                    "Match bank line to recorded payment",
+                    [
+                      ref(
+                        "payment_id",
+                        "Confirmed customer payment",
+                        "payments",
+                        true,
+                      ),
+                    ],
+                    "bank-match",
+                    { id: selected.id },
+                  )
+                }
+              >
+                Match recorded payment
+              </button>
+            )}
           {resource.entity === "allocations" &&
             config.access.finance.approve &&
             !selected.reversed_at && (
@@ -1415,6 +1473,10 @@ export default function BusinessWorkspace({
                   page: 0,
                   parent: "",
                   status: "",
+                  owner: filterOwner,
+                  service: filterService,
+                  from: filterFrom,
+                  to: filterTo,
                 });
               } catch (e) {
                 setError((e as Error).message);
@@ -1424,6 +1486,98 @@ export default function BusinessWorkspace({
             Export filtered CSV
           </button>
         </div>
+        <details className="operation-record">
+          <summary>Filter by date, colleague or service</summary>
+          <div className="form-grid">
+            {[
+              "customers",
+              "enquiries",
+              "opportunities",
+              "commercial",
+              "cases",
+              "tasks",
+            ].includes(resource.entity) && (
+              <label className="field">
+                <span>Assigned colleague</span>
+                <select
+                  value={filterOwner}
+                  onChange={(e) => {
+                    setFilterOwner(e.target.value);
+                    setPage(0);
+                  }}
+                >
+                  <option value="">All permitted colleagues</option>
+                  {config.people.map((p) => (
+                    <option value={p.id} key={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {["enquiries", "cases"].includes(resource.entity) && (
+              <label className="field">
+                <span>Service category</span>
+                <select
+                  value={filterService}
+                  onChange={(e) => {
+                    setFilterService(e.target.value);
+                    setPage(0);
+                  }}
+                >
+                  <option value="">All services</option>
+                  {[
+                    "procurement",
+                    "hardware",
+                    "consulting",
+                    "support",
+                    "ai",
+                    "software",
+                    "data",
+                    "cloud",
+                  ].map((value) => (
+                    <option key={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className="field">
+              <span>Recorded from</span>
+              <input
+                type="date"
+                value={filterFrom}
+                onChange={(e) => {
+                  setFilterFrom(e.target.value);
+                  setPage(0);
+                }}
+              />
+            </label>
+            <label className="field">
+              <span>Recorded through</span>
+              <input
+                type="date"
+                min={filterFrom || undefined}
+                value={filterTo}
+                onChange={(e) => {
+                  setFilterTo(e.target.value);
+                  setPage(0);
+                }}
+              />
+            </label>
+          </div>
+          <button
+            className="secondary"
+            onClick={() => {
+              setFilterOwner("");
+              setFilterService("");
+              setFilterFrom("");
+              setFilterTo("");
+              setPage(0);
+            }}
+          >
+            Clear filters
+          </button>
+        </details>
         {busy ? (
           <p role="status">Loading records…</p>
         ) : rows.length ? (
@@ -1707,6 +1861,9 @@ function Related({
           </>
         )}
       </div>
+      {resource.entity === "customers" && (
+        <CustomerStatement id={record.id} email={String(record.email || "")} />
+      )}
       {notes.length > 0 && (
         <ul>
           {notes.map((n) => (

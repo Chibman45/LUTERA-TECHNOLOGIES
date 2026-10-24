@@ -7,6 +7,7 @@ export type FieldDef = {
   key: string;
   label: string;
   type?:
+    | "multi"
     | "text"
     | "textarea"
     | "date"
@@ -57,6 +58,8 @@ export const masterFields: Record<string, FieldDef[]> = {
     field("phone", "Phone"),
     field("address", "Billing address", "textarea"),
     field("delivery_address", "Delivery address", "textarea"),
+    field("legal_name", "Registered / legal customer name"),
+    field("tags", "Customer tags (comma separated)"),
     field("sector", "Sector"),
     field("tax_id", "Tax identifier (if supplied)"),
     person,
@@ -75,9 +78,41 @@ export const masterFields: Record<string, FieldDef[]> = {
     field("phone", "Phone"),
     field("subject", "Enquiry subject", "text", true),
     field("message", "Requirements", "textarea"),
+    {
+      ...field(
+        "services",
+        "Requested services (select all that apply)",
+        "multi",
+        false,
+        [
+          "procurement",
+          "hardware",
+          "consulting",
+          "support",
+          "ai",
+          "software",
+          "data",
+          "cloud",
+        ],
+      ),
+      default: [],
+    },
     ref("customer_id", "Customer", "customers"),
     person,
     field("follow_up", "Follow-up date", "date"),
+    field("priority", "Priority", "select", true, [
+      "normal",
+      "low",
+      "high",
+      "urgent",
+    ]),
+    field("next_action", "Next action", "textarea"),
+    {
+      key: "evidence_id",
+      label: "Enquiry attachment",
+      type: "evidence",
+      area: "sales",
+    },
     field("status", "Stage", "select", true, [
       "new",
       "acknowledged",
@@ -235,6 +270,9 @@ export const paymentFields: FieldDef[] = [
   ),
 ];
 export const expenseFields: FieldDef[] = [
+  ref("project_id", "Project / service engagement", "cases"),
+  ref("purchase_id", "Source purchase order", "commercial", false, "purchase"),
+  field("cost_center", "Cost centre"),
   ref("supplier_id", "Supplier (optional)", "suppliers"),
   ref("order_id", "Related sales order", "commercial", false, "order"),
   field("title", "Bill / expense description", "text", true),
@@ -281,6 +319,7 @@ export function initialValues(
   return Object.fromEntries(
     fields.map((f) => {
       let v = row?.[f.key];
+      if (f.key === "threshold_minor" && v == null) return [f.key, ""];
       if (v == null)
         v =
           f.default ??
@@ -559,6 +598,39 @@ export function Fields({
                 area={f.area}
                 required={f.required}
               />
+            ) : f.type === "multi" ? (
+              <select
+                multiple
+                aria-label={f.label}
+                value={
+                  Array.isArray(values[f.key])
+                    ? (values[f.key] as string[])
+                    : []
+                }
+                onChange={(e) =>
+                  onChange(
+                    f.key,
+                    Array.from(e.target.selectedOptions, (o) => o.value),
+                  )
+                }
+              >
+                {f.options?.map((o) => (
+                  <option key={o} value={o}>
+                    {(
+                      {
+                        procurement: "IT procurement & sourcing",
+                        hardware: "Computer hardware",
+                        consulting: "Technology consulting",
+                        support: "Installation & support",
+                        ai: "AI & automation",
+                        software: "Software development",
+                        data: "Data analytics",
+                        cloud: "Cloud & integration",
+                      } as Record<string, string>
+                    )[o] || o}
+                  </option>
+                ))}
+              </select>
             ) : f.type === "select" ? (
               <select
                 aria-label={f.label}

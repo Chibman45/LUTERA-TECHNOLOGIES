@@ -1,3 +1,4 @@
+import os
 """Read-only real route checks and explicitly mocked invitation UI. Never sends mail."""
 import json
 from pathlib import Path
@@ -5,7 +6,7 @@ import shutil
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parents[1]
 v=dict(l.split('=',1) for l in (root/'.env.local').read_text().splitlines() if l and not l.startswith('#'))
-origin=v['WORKSPACE_ORIGIN']; entry=v['WORKSPACE_ENTRY']; token='a'*64
+origin=os.environ.get('LUTERA_TEST_URL',v['WORKSPACE_ORIGIN']); entry=v['WORKSPACE_ENTRY']; token='a'*64
 out=root/'test-results';out.mkdir(exist_ok=True)
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path=shutil.which('chromium') or None,headless=True,args=['--no-sandbox'])

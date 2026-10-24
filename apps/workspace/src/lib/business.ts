@@ -76,6 +76,8 @@ export const schemas = {
       ...party,
       ...assigned,
       delivery_address: text(600).default(""),
+      legal_name: text(200).default(""),
+      tags: text(500).default(""),
       sector: text(100).default(""),
       tax_id: text(80).default(""),
       archived: z.boolean().default(false),
@@ -100,6 +102,9 @@ export const schemas = {
       customer_id: link,
       ...assigned,
       follow_up: date,
+      priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
+      next_action: text(500).default(""),
+      evidence_id: link,
       services: z.array(text(100)).max(30).default([]),
       status: z
         .enum([
@@ -250,6 +255,9 @@ export const paymentSchema = z
   .strict();
 export const expenseSchema = z
   .object({
+    project_id: link,
+    purchase_id: link,
+    cost_center: text(100).default(""),
     supplier_id: link,
     order_id: link,
     title: required(200),
@@ -270,6 +278,10 @@ export const listSchema = z
     query: text(100).default(""),
     page: z.number().int().min(0).max(100000).default(0),
     parent: link,
+    owner: link,
+    service: text(100).default(""),
+    from: date,
+    to: date,
     kind: text(30).default(""),
     status: text(30).default(""),
   })

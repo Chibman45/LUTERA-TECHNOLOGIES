@@ -303,7 +303,8 @@ export default function BusinessDelivery({
         <ul>
           {events.map((e) => (
             <li key={e.id}>
-              {String(e.previous_status || "Created")} → {String(e.status)} ·{" "}
+              {String(e.previous_status || "Created")} → {String(e.status)}
+              {e.note ? " · " + String(e.note) : ""} ·{" "}
               {new Date(String(e.created_at)).toLocaleString("en-NG", {
                 timeZone: "Africa/Lagos",
               })}

@@ -1,5 +1,8 @@
 # Lutera business workspace: release and operations
 
+For the 24 October expansion, new controls, verification evidence and open
+account setup, see [implementation status](business-workspace-completion-status.md).
+
 Company: **Lutera Technology Ltd**. Public website: **https://luteratech.com**.
 Staff use their existing private entry on **workspace.luteratech.com**. The root
 and `/admin` deliberately remain unavailable. Customer access is separate at
